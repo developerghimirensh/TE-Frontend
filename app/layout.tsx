@@ -4,7 +4,7 @@ import AppShell from "@/components/AppShell";
 import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Trading Edge",
+  title: "The Millionaire Diary",
   description: "Personal Trading Journal",
   icons: {
     icon: "/favicon.ico",
