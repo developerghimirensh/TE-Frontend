@@ -24,3 +24,31 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@import "tailwindcss";
+
+:root {
+  --background: #090a0c;
+  --foreground: #f4f4f5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Hide scrollbar globally but keep scrolling enabled */
+html {
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Edge, Safari */
+}
+
+body {
+  -ms-overflow-style: none; /* Internet Explorer/old Edge */
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
