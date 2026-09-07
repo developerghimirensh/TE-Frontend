@@ -33,6 +33,9 @@ const FONT_DISPLAY =
 const FONT_NUMBERS =
   '"Rubik", "Gotham", Arial, sans-serif';
 
+const FONT_BODY =
+  'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
 const PROFIT_COLOR = "#15803d";
 const LOSS_COLOR = "#b91c1c";
 
@@ -40,10 +43,10 @@ const neutralShadow =
   "shadow-[8px_8px_18px_rgba(163,177,198,0.20),-8px_-8px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_24px_rgba(163,177,198,0.25),-10px_-10px_24px_rgba(255,255,255,1)]";
 
 const profitShadow =
-  "shadow-[8px_8px_18px_rgba(163,177,198,0.18),-8px_-8px_18px_rgba(255,255,255,0.95),0_4px_16px_rgba(21,128,61,0.12)] hover:shadow-[10px_10px_24px_rgba(163,177,198,0.22)]";
+  "shadow-[8px_8px_18px_rgba(163,177,198,0.18),-8px_-8px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_24px_rgba(163,177,198,0.22),-10px_-10px_24px_rgba(255,255,255,1),0_7px_28px_rgba(21,128,61,0.28)]";
 
 const lossShadow =
-  "shadow-[8px_8px_18px_rgba(163,177,198,0.18),-8px_-8px_18px_rgba(255,255,255,0.95),0_4px_16px_rgba(185,28,28,0.12)] hover:shadow-[10px_10px_24px_rgba(163,177,198,0.22)]";
+  "shadow-[8px_8px_18px_rgba(163,177,198,0.18),-8px_-8px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_24px_rgba(163,177,198,0.22),-10px_-10px_24px_rgba(255,255,255,1),0_7px_28px_rgba(185,28,28,0.28)]";
 
 const insetShadow =
   "shadow-[inset_5px_5px_12px_rgba(163,177,198,0.16),inset_-5px_-5px_12px_rgba(255,255,255,0.9)]";
@@ -122,33 +125,55 @@ function StatCard({
         ${pnlAware}
         ${
           positive === true
-            ? "hover:border-zinc-600/30"
+            ? "hover:border-green-600/70"
             : positive === false
-              ? "hover:border-zinc-600/30"
+              ? "hover:border-red-600/70"
               : "hover:border-zinc-400/80"
         }
       `}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-zinc-500">
+          <p
+            className="
+              text-[10px]
+              font-medium
+              uppercase
+              tracking-[0.20em]
+              text-zinc-500
+            "
+          >
             {label}
           </p>
 
           <p
-            className={`mt-3 text-2xl font-semibold ${
-              positive === true
-                ? "text-green-700"
-                : positive === false
-                  ? "text-red-700"
-                  : "text-zinc-900"
-            }`}
+            className={`
+              mt-3
+              text-2xl
+              font-medium
+              tracking-[0.025em]
+              tabular-nums
+              ${
+                positive === true
+                  ? "text-green-700"
+                  : positive === false
+                    ? "text-red-700"
+                    : "text-zinc-900"
+              }
+            `}
             style={{ fontFamily: FONT_NUMBERS }}
           >
             {value}
 
             {suffix && (
-              <span className="ml-1 text-sm font-medium">
+              <span
+                className="
+                  ml-1
+                  text-sm
+                  font-medium
+                  tracking-normal
+                "
+              >
                 {suffix}
               </span>
             )}
@@ -157,7 +182,12 @@ function StatCard({
 
         <div
           className={`
-            flex h-10 w-10 items-center justify-center
+            flex
+            h-10
+            w-10
+            shrink-0
+            items-center
+            justify-center
             rounded-2xl
             border border-zinc-300/70
             bg-[#eef1f5]
@@ -166,6 +196,7 @@ function StatCard({
         >
           <Icon
             size={18}
+            strokeWidth={1.8}
             className={
               positive === true
                 ? "text-green-700"
@@ -209,19 +240,32 @@ function SectionCard({
       <div className="mb-5 flex items-center gap-3">
         <div
           className={`
-            flex h-10 w-10
-            items-center justify-center
+            flex
+            h-10
+            w-10
+            shrink-0
+            items-center
+            justify-center
             rounded-2xl
             border border-zinc-300/70
             bg-[#eef1f5]
             ${insetShadow}
           `}
         >
-          <Icon size={18} className="text-zinc-700" />
+          <Icon
+            size={18}
+            strokeWidth={1.8}
+            className="text-zinc-700"
+          />
         </div>
 
         <h2
-          className="text-lg font-semibold text-zinc-900"
+          className="
+            text-[17px]
+            font-medium
+            tracking-[-0.015em]
+            text-zinc-900
+          "
           style={{ fontFamily: FONT_DISPLAY }}
         >
           {title}
@@ -247,17 +291,41 @@ function InfoRow({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-5 border-b border-zinc-300/50 py-3 last:border-b-0">
-      <span className="text-sm text-zinc-500">
+    <div
+      className="
+        flex
+        items-center
+        justify-between
+        gap-5
+        border-b
+        border-zinc-300/50
+        py-3
+        last:border-b-0
+      "
+    >
+      <span
+        className="
+          text-[12px]
+          font-normal
+          tracking-[0.005em]
+          text-zinc-500
+        "
+      >
         {label}
       </span>
 
       <span
-        className="text-right text-sm font-semibold text-zinc-800"
+        className="
+          text-right
+          text-[12px]
+          font-medium
+          tracking-[0.005em]
+          text-zinc-800
+        "
         style={{
           fontFamily: mono
             ? FONT_NUMBERS
-            : undefined,
+            : FONT_BODY,
         }}
       >
         {value}
@@ -306,7 +374,6 @@ export default function ProfilePage() {
 
           setAnalytics(analyticsData);
         } catch {
-          // Profile can still work even if analytics fails.
           setAnalytics(null);
         }
       } catch (err) {
@@ -386,19 +453,33 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#eef1f5] px-5 py-10">
+      <main
+        className="
+          min-h-screen
+          bg-[#eef1f5]
+          px-5
+          py-10
+        "
+        style={{ fontFamily: FONT_BODY }}
+      >
         <div className="mx-auto flex min-h-[70vh] max-w-6xl items-center justify-center">
           <div
             className={`
               rounded-3xl
               border border-zinc-300/70
               bg-[#eef1f5]
-              px-10 py-8
+              px-10
+              py-8
               ${neutralShadow}
             `}
           >
             <p
-              className="text-sm font-medium text-zinc-600"
+              className="
+                text-[12px]
+                font-medium
+                tracking-[0.02em]
+                text-zinc-600
+              "
               style={{ fontFamily: FONT_NUMBERS }}
             >
               Loading profile...
@@ -415,11 +496,20 @@ export default function ProfilePage() {
 
   if (error || !user) {
     return (
-      <main className="min-h-screen bg-[#eef1f5] px-5 py-10">
+      <main
+        className="
+          min-h-screen
+          bg-[#eef1f5]
+          px-5
+          py-10
+        "
+        style={{ fontFamily: FONT_BODY }}
+      >
         <div className="mx-auto flex min-h-[70vh] max-w-6xl items-center justify-center">
           <div
             className={`
-              w-full max-w-md
+              w-full
+              max-w-md
               rounded-3xl
               border border-red-300/60
               bg-[#eef1f5]
@@ -428,38 +518,76 @@ export default function ProfilePage() {
               ${lossShadow}
             `}
           >
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef1f5]">
+            <div
+              className="
+                mx-auto
+                flex
+                h-12
+                w-12
+                items-center
+                justify-center
+                rounded-2xl
+                border
+                border-zinc-300/70
+                bg-[#eef1f5]
+                shadow-[inset_5px_5px_12px_rgba(163,177,198,0.16),inset_-5px_-5px_12px_rgba(255,255,255,0.9)]
+              "
+            >
               <ShieldCheck
                 size={22}
+                strokeWidth={1.7}
                 className="text-red-700"
               />
             </div>
 
             <h1
-              className="mt-4 text-xl font-semibold text-zinc-900"
+              className="
+                mt-4
+                text-xl
+                font-medium
+                tracking-[-0.02em]
+                text-zinc-900
+              "
               style={{ fontFamily: FONT_DISPLAY }}
             >
               Profile unavailable
             </h1>
 
-            <p className="mt-2 whitespace-pre-line text-sm text-zinc-600">
+            <p
+              className="
+                mt-2
+                whitespace-pre-line
+                text-[12px]
+                leading-[1.7]
+                tracking-[0.005em]
+                text-zinc-600
+              "
+            >
               {error || "Please log in again."}
             </p>
 
             <Link
               href="/login"
               className="
-                mt-6 inline-flex
-                items-center justify-center
+                mt-6
+                inline-flex
+                items-center
+                justify-center
                 rounded-2xl
-                border border-zinc-800
+                border
+                border-zinc-800
                 bg-zinc-900
-                px-5 py-3
-                text-sm font-semibold text-white
+                px-5
+                py-3
+                text-[12px]
+                font-medium
+                tracking-[0.01em]
+                text-white
                 shadow-[7px_7px_16px_rgba(163,177,198,0.28),-5px_-5px_12px_rgba(255,255,255,0.75)]
-                transition-all duration-300
+                transition-all
+                duration-300
                 hover:-translate-y-0.5
-                hover:border-zinc-600/30
+                hover:border-green-600/70
                 hover:shadow-[8px_8px_18px_rgba(163,177,198,0.25),-6px_-6px_14px_rgba(255,255,255,0.85),0_6px_22px_rgba(21,128,61,0.28)]
               "
             >
@@ -476,7 +604,17 @@ export default function ProfilePage() {
   // ==========================================================
 
   return (
-    <main className="min-h-screen bg-[#eef1f5] px-4 py-7 sm:px-6 lg:px-8 tracking-widest font-sans">
+    <main
+      className="
+        min-h-screen
+        bg-[#eef1f5]
+        px-4
+        py-7
+        sm:px-6
+        lg:px-8
+      "
+      style={{ fontFamily: FONT_BODY }}
+    >
       <div className="mx-auto max-w-6xl">
 
         {/* ==================================================
@@ -484,15 +622,27 @@ export default function ProfilePage() {
         ================================================== */}
 
         <header className="mb-8">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-
+          <div
+            className="
+              flex
+              flex-col
+              gap-5
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+            "
+          >
             <div>
               <Link
                 href="/dashboard"
                 className="
-                  mb-4 inline-flex
-                  items-center gap-2
-                  text-sm font-medium
+                  mb-4
+                  inline-flex
+                  items-center
+                  gap-2
+                  text-[12px]
+                  font-medium
+                  tracking-[0.01em]
                   text-zinc-500
                   transition-colors
                   hover:text-green-700
@@ -503,14 +653,31 @@ export default function ProfilePage() {
               </Link>
 
               <h1
-                className="text-3xl  tracking-tight text-zinc-900 sm:text-4xl"
+                className="
+                  text-3xl
+                  font-medium
+                  tracking-[-0.025em]
+                  text-zinc-900
+                  sm:text-4xl
+                "
                 style={{ fontFamily: FONT_DISPLAY }}
               >
-               HELLO,  {fullName}
+                HELLO, {fullName}
               </h1>
 
-              <p className="mt-2 text-sm text-zinc-500">
-                Your Trading Edge account and trading performance overview.
+              <p
+                className="
+                  mt-2
+                  max-w-2xl
+                  text-[12px]
+                  font-normal
+                  leading-[1.7]
+                  tracking-[0.005em]
+                  text-zinc-500
+                "
+              >
+                Your Trading Edge account and trading
+                performance overview.
               </p>
             </div>
 
@@ -524,13 +691,19 @@ export default function ProfilePage() {
                 gap-2
                 self-start
                 rounded-2xl
-                border border-zinc-300/70
+                border
+                border-zinc-300/70
                 bg-[#eef1f5]
-                px-5 py-3
-                text-sm font-semibold
+                px-5
+                py-3
+                text-[12px]
+                font-medium
+                tracking-[0.01em]
                 text-zinc-700
-                transition-all duration-300
-                hover:border-zinc-600/70
+                transition-all
+                duration-300
+                hover:-translate-y-0.5
+                hover:border-red-600/70
                 hover:text-red-700
                 hover:shadow-[7px_7px_18px_rgba(163,177,198,0.22),-7px_-7px_18px_rgba(255,255,255,0.95),0_6px_22px_rgba(185,28,28,0.22)]
               "
@@ -552,20 +725,33 @@ export default function ProfilePage() {
             rounded-[2rem]
             border border-zinc-300/70
             bg-[#eef1f5]
-            p-6 sm:p-8
+            p-6
+            sm:p-8
             ${neutralShadow}
           `}
         >
-          <div className="flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
-
+          <div
+            className="
+              flex
+              flex-col
+              gap-7
+              md:flex-row
+              md:items-center
+              md:justify-between
+            "
+          >
             <div className="flex items-center gap-5">
 
-              {/* Avatar */}
+              {/* AVATAR */}
 
               <div
                 className="
-                  flex h-20 w-20 shrink-0
-                  items-center justify-center
+                  flex
+                  h-20
+                  w-20
+                  shrink-0
+                  items-center
+                  justify-center
                   rounded-[1.7rem]
                   border border-zinc-300/70
                   bg-[#eef1f5]
@@ -580,32 +766,53 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
+                <p
+                  className="
+                    text-[10px]
+                    font-medium
+                    uppercase
+                    tracking-[0.20em]
+                    text-zinc-500
+                  "
+                >
                   Trading Edge Trader
                 </p>
 
-                {/* Full Name */}
-
                 <h2
-                  className="mt-1 text-2xl font-semibold text-zinc-900 sm:text-3xl"
+                  className="
+                    mt-1
+                    text-2xl
+                    font-medium
+                    tracking-[-0.02em]
+                    text-zinc-900
+                    sm:text-3xl
+                  "
                   style={{ fontFamily: FONT_DISPLAY }}
                 >
                   {fullName}
                 </h2>
 
-                {/* Username */}
-
                 <p
-                  className="mt-1 text-sm text-zinc-500"
+                  className="
+                    mt-1
+                    text-[12px]
+                    font-medium
+                    tracking-[0.01em]
+                    text-zinc-500
+                  "
                   style={{ fontFamily: FONT_NUMBERS }}
                 >
                   @{user.username}
                 </p>
 
-                {/* Account ID */}
-
                 <p
-                  className="mt-1 text-xs text-zinc-400"
+                  className="
+                    mt-1
+                    text-[10px]
+                    font-medium
+                    tracking-[0.04em]
+                    text-zinc-400
+                  "
                   style={{ fontFamily: FONT_NUMBERS }}
                 >
                   Account #{user.id}
@@ -613,7 +820,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Net P&L */}
+            {/* NET P&L */}
 
             <div
               className={`
@@ -622,15 +829,24 @@ export default function ProfilePage() {
                 border border-zinc-300/70
                 bg-[#eef1f5]
                 p-5
-                transition-all duration-300
+                transition-all
+                duration-300
                 ${
                   isPositive(netPnl)
-                    ? `${profitShadow} hover:border-zinc-600/30`
-                    : `${lossShadow} hover:border-zinc-600/30`
+                    ? `${profitShadow} hover:border-green-600/70`
+                    : `${lossShadow} hover:border-red-600/70`
                 }
               `}
             >
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+              <p
+                className="
+                  text-[10px]
+                  font-medium
+                  uppercase
+                  tracking-[0.20em]
+                  text-zinc-500
+                "
+              >
                 Net P&L
               </p>
 
@@ -638,29 +854,45 @@ export default function ProfilePage() {
                 {netPnl >= 0 ? (
                   <TrendingUp
                     size={21}
+                    strokeWidth={1.8}
                     className="text-green-700"
                   />
                 ) : (
                   <TrendingDown
                     size={21}
+                    strokeWidth={1.8}
                     className="text-red-700"
                   />
                 )}
 
                 <span
-                  className={`text-3xl font-semibold ${
-                    netPnl >= 0
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}
+                  className={`
+                    text-3xl
+                    font-medium
+                    tracking-[-0.025em]
+                    tabular-nums
+                    ${
+                      netPnl >= 0
+                        ? "text-green-700"
+                        : "text-red-700"
+                    }
+                  `}
                   style={{ fontFamily: FONT_NUMBERS }}
                 >
                   {netPnl >= 0 ? "+" : ""}
-                  {formatNumber(netPnl)}
+                  ${formatNumber(netPnl)}
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-zinc-500">
+              <p
+                className="
+                  mt-1
+                  text-[11px]
+                  font-normal
+                  tracking-[0.005em]
+                  text-zinc-500
+                "
+              >
                 Overall trading result
               </p>
             </div>
@@ -697,7 +929,7 @@ export default function ProfilePage() {
               label="Gross P&L"
               value={`${
                 grossPnl >= 0 ? "+" : ""
-              }${formatNumber(grossPnl)}`}
+              }$${formatNumber(grossPnl)}`}
               icon={
                 grossPnl >= 0
                   ? TrendingUp
@@ -708,7 +940,7 @@ export default function ProfilePage() {
 
             <StatCard
               label="Total Fees"
-              value={formatNumber(totalFees)}
+              value={`$${formatNumber(totalFees)}`}
               icon={Wallet}
             />
           </div>
@@ -720,16 +952,13 @@ export default function ProfilePage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
 
-          {/* ==================================================
-              ACCOUNT INFORMATION
-          ================================================== */}
+          {/* ACCOUNT INFORMATION */}
 
           <SectionCard
             title="Account Information"
             icon={UserRound}
           >
             <div>
-
               <InfoRow
                 label="Full Name"
                 value={fullName}
@@ -772,9 +1001,7 @@ export default function ProfilePage() {
             </div>
           </SectionCard>
 
-          {/* ==================================================
-              PERFORMANCE SUMMARY
-          ================================================== */}
+          {/* PERFORMANCE SUMMARY */}
 
           <SectionCard
             title="Performance Summary"
@@ -782,12 +1009,12 @@ export default function ProfilePage() {
           >
             {analytics ? (
               <div>
-
                 <InfoRow
                   label="Winning Trades"
                   value={formatInteger(
                     analytics.winning_trades
                   )}
+                  mono
                 />
 
                 <InfoRow
@@ -795,6 +1022,7 @@ export default function ProfilePage() {
                   value={formatInteger(
                     analytics.losing_trades
                   )}
+                  mono
                 />
 
                 <InfoRow
@@ -802,6 +1030,7 @@ export default function ProfilePage() {
                   value={formatInteger(
                     analytics.breakeven_trades
                   )}
+                  mono
                 />
 
                 <InfoRow
@@ -817,15 +1046,21 @@ export default function ProfilePage() {
                 />
               </div>
             ) : (
-              <p className="text-sm text-zinc-500">
-                Performance data is currently unavailable.
+              <p
+                className="
+                  text-[12px]
+                  leading-[1.7]
+                  tracking-[0.005em]
+                  text-zinc-500
+                "
+              >
+                Performance data is currently
+                unavailable.
               </p>
             )}
           </SectionCard>
 
-          {/* ==================================================
-              PROFIT & LOSS
-          ================================================== */}
+          {/* PROFIT & LOSS */}
 
           <SectionCard
             title="Profit & Loss"
@@ -834,57 +1069,99 @@ export default function ProfilePage() {
             {analytics ? (
               <div className="grid grid-cols-2 gap-4">
 
+                {/* GROSS PROFIT */}
+
                 <div
                   className={`
                     rounded-2xl
                     border border-zinc-300/70
                     bg-[#eef1f5]
                     p-4
-                    ${
-                      Number(analytics.gross_profit) >= 0
-                        ? `${profitShadow} hover:border-zinc-600/30`
-                        : neutralShadow
-                    }
+                    transition-all
+                    duration-300
+                    ${profitShadow}
+                    hover:border-green-600/70
                   `}
                 >
-                  <p className="text-xs text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.16em]
+                      text-zinc-500
+                    "
+                  >
                     Gross Profit
                   </p>
 
                   <p
-                    className="mt-2 text-lg font-semibold text-green-700"
+                    className="
+                      mt-2
+                      text-lg
+                      font-medium
+                      tracking-[-0.02em]
+                      tabular-nums
+                      text-green-700
+                    "
                     style={{ fontFamily: FONT_NUMBERS }}
                   >
-                    +
+                    +$
                     {formatNumber(
                       analytics.gross_profit
                     )}
                   </p>
                 </div>
 
+                {/* GROSS LOSS */}
+
                 <div
                   className={`
                     rounded-2xl
                     border border-zinc-300/70
                     bg-[#eef1f5]
                     p-4
+                    transition-all
+                    duration-300
                     ${lossShadow}
-                    hover:border-zinc-600/30
+                    hover:border-red-600/70
                   `}
                 >
-                  <p className="text-xs text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.16em]
+                      text-zinc-500
+                    "
+                  >
                     Gross Loss
                   </p>
 
                   <p
-                    className="mt-2 text-lg font-semibold text-red-700"
+                    className="
+                      mt-2
+                      text-lg
+                      font-medium
+                      tracking-[-0.02em]
+                      tabular-nums
+                      text-red-700
+                    "
                     style={{ fontFamily: FONT_NUMBERS }}
                   >
+                    -$
                     {formatNumber(
-                      analytics.gross_loss
+                      Math.abs(
+                        Number(
+                          analytics.gross_loss
+                        )
+                      )
                     )}
                   </p>
                 </div>
+
+                {/* AVERAGE WIN */}
 
                 <div
                   className={`
@@ -892,64 +1169,105 @@ export default function ProfilePage() {
                     border border-zinc-300/70
                     bg-[#eef1f5]
                     p-4
-                    ${
-                      Number(
-                        analytics.average_win
-                      ) >= 0
-                        ? `${profitShadow} hover:border-zinc-600/30`
-                        : neutralShadow
-                    }
+                    transition-all
+                    duration-300
+                    ${profitShadow}
+                    hover:border-green-600/70
                   `}
                 >
-                  <p className="text-xs text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.16em]
+                      text-zinc-500
+                    "
+                  >
                     Average Win
                   </p>
 
                   <p
-                    className="mt-2 text-lg font-semibold text-green-700"
+                    className="
+                      mt-2
+                      text-lg
+                      font-medium
+                      tracking-[-0.02em]
+                      tabular-nums
+                      text-green-700
+                    "
                     style={{ fontFamily: FONT_NUMBERS }}
                   >
-                    +
+                    +$
                     {formatNumber(
                       analytics.average_win
                     )}
                   </p>
                 </div>
 
+                {/* AVERAGE LOSS */}
+
                 <div
                   className={`
                     rounded-2xl
                     border border-zinc-300/70
                     bg-[#eef1f5]
                     p-4
+                    transition-all
+                    duration-300
                     ${lossShadow}
-                    hover:border-zinc-600/30
+                    hover:border-red-600/70
                   `}
                 >
-                  <p className="text-xs text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.16em]
+                      text-zinc-500
+                    "
+                  >
                     Average Loss
                   </p>
 
                   <p
-                    className="mt-2 text-lg font-semibold text-red-700"
+                    className="
+                      mt-2
+                      text-lg
+                      font-medium
+                      tracking-[-0.02em]
+                      tabular-nums
+                      text-red-700
+                    "
                     style={{ fontFamily: FONT_NUMBERS }}
                   >
+                    -$
                     {formatNumber(
-                      analytics.average_loss
+                      Math.abs(
+                        Number(
+                          analytics.average_loss
+                        )
+                      )
                     )}
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-zinc-500">
+              <p
+                className="
+                  text-[12px]
+                  leading-[1.7]
+                  tracking-[0.005em]
+                  text-zinc-500
+                "
+              >
                 P&L data is currently unavailable.
               </p>
             )}
           </SectionCard>
 
-          {/* ==================================================
-              TRADING HABITS
-          ================================================== */}
+          {/* TRADING HABITS */}
 
           <SectionCard
             title="Trading Habits"
@@ -957,13 +1275,13 @@ export default function ProfilePage() {
           >
             {analytics ? (
               <div>
-
                 <InfoRow
                   label="Trading Days"
                   value={formatInteger(
                     analytics.trade_frequency
                       .trading_days
                   )}
+                  mono
                 />
 
                 <InfoRow
@@ -1008,8 +1326,16 @@ export default function ProfilePage() {
                 />
               </div>
             ) : (
-              <p className="text-sm text-zinc-500">
-                Trading habit data is currently unavailable.
+              <p
+                className="
+                  text-[12px]
+                  leading-[1.7]
+                  tracking-[0.005em]
+                  text-zinc-500
+                "
+              >
+                Trading habit data is currently
+                unavailable.
               </p>
             )}
           </SectionCard>
@@ -1022,7 +1348,7 @@ export default function ProfilePage() {
         {analytics && (
           <div className="mt-6 grid gap-6 md:grid-cols-2">
 
-            {/* Best Day */}
+            {/* BEST DAY */}
 
             <div
               className={`
@@ -1030,19 +1356,35 @@ export default function ProfilePage() {
                 border border-zinc-300/70
                 bg-[#eef1f5]
                 p-6
+                transition-all
+                duration-300
                 ${profitShadow}
-                hover:border-zinc-600/30
+                hover:border-green-600/70
               `}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.20em]
+                      text-zinc-500
+                    "
+                  >
                     Best Trading Day
                   </p>
 
                   <h3
-                    className="mt-2 text-xl font-semibold text-zinc-900"
-                    style={{ fontFamily: FONT_DISPLAY }}
+                    className="
+                      mt-2
+                      text-xl
+                      font-medium
+                      tracking-[-0.02em]
+                      text-zinc-900
+                    "
+                    style={{ fontFamily: FONT_NUMBERS }}
                   >
                     {bestDay
                       ? new Date(
@@ -1060,34 +1402,51 @@ export default function ProfilePage() {
                 </div>
 
                 <div
-                  className="
-                    flex h-11 w-11
-                    items-center justify-center
+                  className={`
+                    flex
+                    h-11
+                    w-11
+                    shrink-0
+                    items-center
+                    justify-center
                     rounded-2xl
                     border border-zinc-300/70
                     bg-[#eef1f5]
-                  "
+                    ${insetShadow}
+                  `}
                 >
                   <TrendingUp
                     size={20}
+                    strokeWidth={1.8}
                     className="text-green-700"
                   />
                 </div>
               </div>
 
+              {/* BEST DAY P&L — RUBIK */}
+
               <p
-                className="mt-4 text-2xl font-semibold text-green-700"
+                className="
+                  mt-4
+                  text-2xl
+                  font-medium
+                  tracking-[-0.025em]
+                  tabular-nums
+                  text-green-700
+                "
                 style={{ fontFamily: FONT_NUMBERS }}
               >
                 {bestDay
-                  ? `+${formatNumber(
-                      bestDay.pnl
+                  ? `+$${formatNumber(
+                      Math.abs(
+                        Number(bestDay.pnl)
+                      )
                     )}`
                   : "—"}
               </p>
             </div>
 
-            {/* Worst Day */}
+            {/* WORST DAY */}
 
             <div
               className={`
@@ -1095,19 +1454,35 @@ export default function ProfilePage() {
                 border border-zinc-300/70
                 bg-[#eef1f5]
                 p-6
+                transition-all
+                duration-300
                 ${lossShadow}
-                hover:border-zinc-600/30
+                hover:border-red-600/70
               `}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.20em]
+                      text-zinc-500
+                    "
+                  >
                     Worst Trading Day
                   </p>
 
                   <h3
-                    className="mt-2 text-xl font-semibold text-zinc-900"
-                    style={{ fontFamily: FONT_DISPLAY }}
+                    className="
+                      mt-2
+                      text-xl
+                      font-medium
+                      tracking-[-0.02em]
+                      text-zinc-900
+                    "
+                    style={{ fontFamily: FONT_NUMBERS }}
                   >
                     {worstDay
                       ? new Date(
@@ -1125,29 +1500,46 @@ export default function ProfilePage() {
                 </div>
 
                 <div
-                  className="
-                    flex h-11 w-11
-                    items-center justify-center
+                  className={`
+                    flex
+                    h-11
+                    w-11
+                    shrink-0
+                    items-center
+                    justify-center
                     rounded-2xl
                     border border-zinc-300/70
                     bg-[#eef1f5]
-                  "
+                    ${insetShadow}
+                  `}
                 >
                   <TrendingDown
                     size={20}
+                    strokeWidth={1.8}
                     className="text-red-700"
                   />
                 </div>
               </div>
 
+              {/* WORST DAY P&L — RUBIK */}
+
               <p
-                className="mt-4 text-2xl font-semibold text-red-700"
+                className="
+                  mt-4
+                  text-2xl
+                  font-medium
+                  tracking-[-0.025em]
+                  tabular-nums
+                  text-red-700
+                "
                 style={{ fontFamily: FONT_NUMBERS }}
               >
                 {worstDay
-                  ? formatNumber(
-                      worstDay.pnl
-                    )
+                  ? `-$${formatNumber(
+                      Math.abs(
+                        Number(worstDay.pnl)
+                      )
+                    )}`
                   : "—"}
               </p>
             </div>
@@ -1172,8 +1564,12 @@ export default function ProfilePage() {
               <div className="mb-5 flex items-center gap-3">
                 <div
                   className={`
-                    flex h-10 w-10
-                    items-center justify-center
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
                     rounded-2xl
                     border border-zinc-300/70
                     bg-[#eef1f5]
@@ -1182,12 +1578,18 @@ export default function ProfilePage() {
                 >
                   <Target
                     size={18}
+                    strokeWidth={1.8}
                     className="text-zinc-700"
                   />
                 </div>
 
                 <h2
-                  className="text-lg font-semibold text-zinc-900"
+                  className="
+                    text-[17px]
+                    font-medium
+                    tracking-[-0.015em]
+                    text-zinc-900
+                  "
                   style={{ fontFamily: FONT_DISPLAY }}
                 >
                   Trading Streaks
@@ -1196,31 +1598,60 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-2 gap-4">
 
+                {/* WINNING STREAK */}
+
                 <div
                   className={`
                     rounded-2xl
                     border border-zinc-300/70
                     bg-[#eef1f5]
                     p-5
+                    transition-all
+                    duration-300
                     ${profitShadow}
-                    hover:border-zinc-600/30
+                    hover:border-green-600/70
                   `}
                 >
-                  <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.18em]
+                      text-zinc-500
+                    "
+                  >
                     Winning Streak
                   </p>
 
                   <p
-                    className="mt-2 text-3xl font-semibold text-green-700"
+                    className="
+                      mt-2
+                      text-3xl
+                      font-medium
+                      tracking-[-0.025em]
+                      tabular-nums
+                      text-green-700
+                    "
                     style={{ fontFamily: FONT_NUMBERS }}
                   >
                     {analytics.winning_streak}
                   </p>
 
-                  <p className="mt-1 text-xs text-zinc-500">
+                  <p
+                    className="
+                      mt-1
+                      text-[11px]
+                      font-normal
+                      tracking-[0.005em]
+                      text-zinc-500
+                    "
+                  >
                     consecutive wins
                   </p>
                 </div>
+
+                {/* LOSING STREAK */}
 
                 <div
                   className={`
@@ -1228,22 +1659,47 @@ export default function ProfilePage() {
                     border border-zinc-300/70
                     bg-[#eef1f5]
                     p-5
+                    transition-all
+                    duration-300
                     ${lossShadow}
-                    hover:border-zinc-600/30
+                    hover:border-red-600/70
                   `}
                 >
-                  <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.18em]
+                      text-zinc-500
+                    "
+                  >
                     Losing Streak
                   </p>
 
                   <p
-                    className="mt-2 text-3xl font-semibold text-red-700"
+                    className="
+                      mt-2
+                      text-3xl
+                      font-medium
+                      tracking-[-0.025em]
+                      tabular-nums
+                      text-red-700
+                    "
                     style={{ fontFamily: FONT_NUMBERS }}
                   >
                     {analytics.losing_streak}
                   </p>
 
-                  <p className="mt-1 text-xs text-zinc-500">
+                  <p
+                    className="
+                      mt-1
+                      text-[11px]
+                      font-normal
+                      tracking-[0.005em]
+                      text-zinc-500
+                    "
+                  >
                     consecutive losses
                   </p>
                 </div>
@@ -1261,14 +1717,22 @@ export default function ProfilePage() {
           <Link
             href="/dashboard"
             className="
-              flex items-center justify-center gap-2
+              flex
+              items-center
+              justify-center
+              gap-2
               rounded-2xl
-              border border-zinc-300/70
+              border
+              border-zinc-300/70
               bg-[#eef1f5]
-              px-5 py-4
-              text-sm font-semibold
+              px-5
+              py-4
+              text-[12px]
+              font-medium
+              tracking-[0.015em]
               text-zinc-700
-              transition-all duration-300
+              transition-all
+              duration-300
               hover:-translate-y-0.5
               hover:border-green-600/70
               hover:text-green-700
@@ -1282,14 +1746,22 @@ export default function ProfilePage() {
           <Link
             href="/trades"
             className="
-              flex items-center justify-center gap-2
+              flex
+              items-center
+              justify-center
+              gap-2
               rounded-2xl
-              border border-zinc-300/70
+              border
+              border-zinc-300/70
               bg-[#eef1f5]
-              px-5 py-4
-              text-sm font-semibold
+              px-5
+              py-4
+              text-[12px]
+              font-medium
+              tracking-[0.015em]
               text-zinc-700
-              transition-all duration-300
+              transition-all
+              duration-300
               hover:-translate-y-0.5
               hover:border-green-600/70
               hover:text-green-700
@@ -1306,7 +1778,14 @@ export default function ProfilePage() {
         ================================================== */}
 
         <div className="py-8 text-center">
-          <p className="text-xs text-zinc-400">
+          <p
+            className="
+              text-[10px]
+              font-normal
+              tracking-[0.04em]
+              text-zinc-400
+            "
+          >
             Trading Edge · Trade with discipline. Learn from every trade.
           </p>
         </div>

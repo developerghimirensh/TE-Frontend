@@ -1,6 +1,5 @@
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://te-backend-uxgj.onrender.com/api";
+  "http://localhost:8000/api";
 
 
 // ============================================================

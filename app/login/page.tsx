@@ -8,6 +8,10 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { login as apiLogin } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
+const neutralShadow =
+  "shadow-[8px_8px_18px_rgba(163,177,198,0.20),-8px_-8px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_24px_rgba(163,177,198,0.25),-10px_-10px_24px_rgba(255,255,255,1)]";
+
+
 const FONT_DISPLAY =
   '"Lucida Fax", "Lucida Bright", Georgia, serif';
 
@@ -81,12 +85,15 @@ export default function LoginPage() {
 
         {/* Website Name */}
         <div className="mb-7 text-center">
-          <h1
-            className="text-3xl font-semibold tracking-tight text-zinc-900"
-            style={{ fontFamily: FONT_DISPLAY }}
+                <div
+            className={`group inline-flex items-center gap-3 rounded-lg border
+                 border-zinc-300/70 bg-[#eef1f5] px-20 py-3 text-[12px] font-medium 
+                 uppercase tracking-[0.20em] text-zinc-600 transition-all duration-300 
+                 ${neutralShadow} hover:border-green-600/60 hover:text-green-700 mb-3`}
           >
-            Trading Edge
-          </h1>
+
+            The Millionaire Diary
+          </div>
         </div>
 
         {/* Login Card */}

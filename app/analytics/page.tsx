@@ -1226,7 +1226,7 @@ export default function AnalyticsPage() {
                 <div className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
 
                 <span className="text-[10px] font-normal uppercase tracking-[0.16em] text-zinc-400">
-                  Trading Journal
+                 The Millionaire Diary
                 </span>
               </div>
 

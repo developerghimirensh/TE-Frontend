@@ -366,7 +366,7 @@ export default function NewTradePage() {
                   className="text-[10px] font-normal uppercase tracking-[0.16em] text-zinc-400"
                   style={numberFontStyle}
                 >
-                  Trading Journal
+                  The Millionaire Diary
                 </span>
               </div>
 

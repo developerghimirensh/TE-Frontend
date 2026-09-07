@@ -7,11 +7,12 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { register } from "@/lib/api";
 
-const FONT_DISPLAY =
-  '"Lucida Fax", "Lucida Bright", Georgia, serif';
+const neutralShadow =
+  "shadow-[8px_8px_18px_rgba(163,177,198,0.20),-8px_-8px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_24px_rgba(163,177,198,0.25),-10px_-10px_24px_rgba(255,255,255,1)]";
 
-const FONT_NUMBERS =
-  '"Rubik", "Gotham", Arial, sans-serif';
+const FONT_DISPLAY = '"Lucida Fax", "Lucida Bright", Georgia, serif';
+
+const FONT_NUMBERS = '"Rubik", "Gotham", Arial, sans-serif';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,21 +22,16 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
 
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
@@ -64,9 +60,7 @@ export default function RegisterPage() {
 
     // Password validation
     if (password.length < 8) {
-      setError(
-        "Password must be at least 8 characters."
-      );
+      setError("Password must be at least 8 characters.");
       return;
     }
 
@@ -91,7 +85,7 @@ export default function RegisterPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Registration failed. Please try again."
+          : "Registration failed. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -100,15 +94,21 @@ export default function RegisterPage() {
 
   return (
     <main
-      className="min-h-screen flex items-center justify-center px-4 py-5"
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-5"
       style={{
         background: "#eef1f5",
         fontFamily: FONT_NUMBERS,
       }}
     >
+      <div
+        className={`group inline-flex items-center gap-3 rounded-lg border
+                 border-zinc-300/70 bg-[#eef1f5] px-20 py-3 text-[12px] font-medium 
+                 uppercase tracking-[0.20em] text-zinc-600 transition-all duration-300 
+                 ${neutralShadow} hover:border-green-600/60 hover:text-green-700 mb-8`}
+      >
+        The Millionaire Diary
+      </div>
       <div className="w-full max-w-md">
-
-
         {/* Register Card */}
         <div
           className="
@@ -119,7 +119,6 @@ export default function RegisterPage() {
             shadow-[9px_9px_22px_rgba(163,177,198,0.25),-9px_-9px_22px_rgba(255,255,255,0.95)]
           "
         >
-
           {/* Error */}
           {error && (
             <div
@@ -139,14 +138,9 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
-
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* First Name + Last Name */}
             <div className="grid grid-cols-2 gap-4">
-
               {/* First Name */}
               <div>
                 <label
@@ -160,9 +154,7 @@ export default function RegisterPage() {
                   id="first-name"
                   type="text"
                   value={firstName}
-                  onChange={(event) =>
-                    setFirstName(event.target.value)
-                  }
+                  onChange={(event) => setFirstName(event.target.value)}
                   placeholder="First name"
                   autoComplete="given-name"
                   disabled={loading}
@@ -202,9 +194,7 @@ export default function RegisterPage() {
                   id="last-name"
                   type="text"
                   value={lastName}
-                  onChange={(event) =>
-                    setLastName(event.target.value)
-                  }
+                  onChange={(event) => setLastName(event.target.value)}
                   placeholder="Last name"
                   autoComplete="family-name"
                   disabled={loading}
@@ -230,7 +220,6 @@ export default function RegisterPage() {
                   "
                 />
               </div>
-
             </div>
 
             {/* Username */}
@@ -246,9 +235,7 @@ export default function RegisterPage() {
                 id="username"
                 type="text"
                 value={username}
-                onChange={(event) =>
-                  setUsername(event.target.value)
-                }
+                onChange={(event) => setUsername(event.target.value)}
                 placeholder="Enter your username"
                 autoComplete="username"
                 disabled={loading}
@@ -285,18 +272,11 @@ export default function RegisterPage() {
               </label>
 
               <div className="relative">
-
                 <input
                   id="password"
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(event) =>
-                    setPassword(event.target.value)
-                  }
+                  onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
                   autoComplete="new-password"
                   disabled={loading}
@@ -325,17 +305,9 @@ export default function RegisterPage() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPassword(
-                      (value) => !value
-                    )
-                  }
+                  onClick={() => setShowPassword((value) => !value)}
                   disabled={loading}
-                  aria-label={
-                    showPassword
-                      ? "Hide password"
-                      : "Show password"
-                  }
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="
                     absolute
                     right-3
@@ -350,18 +322,11 @@ export default function RegisterPage() {
                     disabled:cursor-not-allowed
                   "
                 >
-                  {showPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-
               </div>
 
-              <p className="mt-2 text-xs text-zinc-400">
-                Minimum 8 characters
-              </p>
+              <p className="mt-2 text-xs text-zinc-400">Minimum 8 characters</p>
             </div>
 
             {/* Confirm Password */}
@@ -374,20 +339,11 @@ export default function RegisterPage() {
               </label>
 
               <div className="relative">
-
                 <input
                   id="confirm-password"
-                  type={
-                    showConfirmPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
-                  onChange={(event) =>
-                    setConfirmPassword(
-                      event.target.value
-                    )
-                  }
+                  onChange={(event) => setConfirmPassword(event.target.value)}
                   placeholder="Confirm your password"
                   autoComplete="new-password"
                   disabled={loading}
@@ -416,16 +372,10 @@ export default function RegisterPage() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowConfirmPassword(
-                      (value) => !value
-                    )
-                  }
+                  onClick={() => setShowConfirmPassword((value) => !value)}
                   disabled={loading}
                   aria-label={
-                    showConfirmPassword
-                      ? "Hide password"
-                      : "Show password"
+                    showConfirmPassword ? "Hide password" : "Show password"
                   }
                   className="
                     absolute
@@ -447,7 +397,6 @@ export default function RegisterPage() {
                     <Eye size={18} />
                   )}
                 </button>
-
               </div>
             </div>
 
@@ -482,10 +431,7 @@ export default function RegisterPage() {
             >
               {loading ? (
                 <>
-                  <Loader2
-                    size={17}
-                    className="animate-spin"
-                  />
+                  <Loader2 size={17} className="animate-spin" />
                   Creating account...
                 </>
               ) : (
@@ -505,7 +451,6 @@ export default function RegisterPage() {
           >
             <p className="text-sm text-zinc-500">
               Already have an account?{" "}
-
               <Link
                 href="/login"
                 className="
@@ -521,7 +466,6 @@ export default function RegisterPage() {
               </Link>
             </p>
           </div>
-
         </div>
       </div>
     </main>
