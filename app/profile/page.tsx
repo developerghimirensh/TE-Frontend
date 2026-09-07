@@ -503,7 +503,7 @@ export default function ProfilePage() {
               </Link>
 
               <h1
-                className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl"
+                className="text-3xl  tracking-tight text-zinc-900 sm:text-4xl"
                 style={{ fontFamily: FONT_DISPLAY }}
               >
                HELLO,  {fullName}

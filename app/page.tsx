@@ -23,7 +23,7 @@ import {
 import {
   getStoredUser,
   getTrades,
-  getAnalytics,
+  getAnalytics, 
   type Trade,
   type Analytics,
 } from "@/lib/api";
@@ -396,8 +396,8 @@ export default function DashboardPage() {
   const [error, setError] =
     useState<string | null>(null);
 
-  const [userName, setUserName] =
-    useState("Trader");
+  const [firstName, setFirstName] = useState("Trader");
+  const [lastName, setLastName] = useState("Trader");
 
   const [selectedMonth, setSelectedMonth] =
     useState<string | null>(null);
@@ -409,8 +409,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const user = getStoredUser();
 
-    if (user?.username) {
-      setUserName(user.username);
+    if (user?.first_name) {
+      setFirstName(user.first_name);
+    }
+    if (user?.last_name) {
+      setLastName(user.last_name);
     }
   }, []);
 
@@ -1062,7 +1065,7 @@ export default function DashboardPage() {
               className="text-[28px] font-normal leading-tight tracking-tight text-zinc-950 sm:text-[34px]"
               style={displayFontStyle}
             >
-              Welcome back, {userName}.
+              Welcome Back, {firstName} {lastName}.
             </h1>
 
             <p className="mt-2 text-sm text-zinc-400">
@@ -1168,7 +1171,7 @@ export default function DashboardPage() {
                 className="text-[28px] font-normal leading-tight tracking-tight text-zinc-950 sm:text-[34px]"
                 style={displayFontStyle}
               >
-                Welcome back, {userName}.
+                Welcome back, {firstName} {lastName}.
               </h1>
 
               <p className="mt-2 text-xs text-zinc-400 sm:text-sm">
