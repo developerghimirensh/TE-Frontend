@@ -6,6 +6,9 @@ import { AuthProvider } from "@/context/AuthContext";
 export const metadata: Metadata = {
   title: "Trade Journal",
   description: "Personal Trading Journal",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
