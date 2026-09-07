@@ -1171,7 +1171,7 @@ export default function DashboardPage() {
                 className="text-[28px] font-normal leading-tight tracking-tight text-zinc-950 sm:text-[34px]"
                 style={displayFontStyle}
               >
-                Welcome back, {firstName} {lastName}.
+                Welcome Back, {firstName} {lastName}.
               </h1>
 
               <p className="mt-2 text-xs text-zinc-400 sm:text-sm">
