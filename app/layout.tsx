@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   title: "Trade Journal",
   description: "Personal Trading Journal",
   icons: {
-    icon: "/icon.png",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
   },
 };
 
