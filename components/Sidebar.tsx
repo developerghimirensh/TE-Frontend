@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-Home,
-TrendingUp,
-BarChart3,
-PlusCircle,
-User,
+LayoutDashboard,
+ChartCandlestick,
+ChartNoAxesCombined,
+SquarePlus,
+UserStar,
 LogOut,
 ChevronsLeft,
 ChevronsRight,
@@ -33,27 +33,27 @@ const SIDEBAR_MARGIN = 20;
 const NAV_ITEMS = [
 {
 label: "Dashboard",
-icon: Home,
+icon: LayoutDashboard ,
 href: "/dashboard",
 },
 {
 label: "Trades",
-icon: TrendingUp,
+icon: ChartCandlestick,
 href: "/trades",
 },
 {
 label: "Analytics",
-icon: BarChart3,
+icon: ChartNoAxesCombined,
 href: "/analytics",
 },
 {
 label: "Add Trade",
-icon: PlusCircle,
+icon: SquarePlus,
 href: "/trades/new",
 },
 {
 label: "User Profile",
-icon: User,
+icon: UserStar,
 href: "/profile",
 },
 ];
