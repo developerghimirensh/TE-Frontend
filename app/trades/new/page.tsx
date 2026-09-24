@@ -60,8 +60,26 @@ const lossShadow =
 /* Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Returns the current local date/time in the format required by
+ * <input type="datetime-local" />
+ */
 function getLocalDateTime(): string {
   const now = new Date();
+
+  const offset = now.getTimezoneOffset();
+  const local = new Date(now.getTime() - offset * 60 * 1000);
+
+  return local.toISOString().slice(0, 16);
+}
+
+/**
+ * Returns the local date/time from 15 minutes before now.
+ */
+function getLocalDateTimeMinus15Minutes(): string {
+  const now = new Date();
+
+  now.setMinutes(now.getMinutes() - 15);
 
   const offset = now.getTimezoneOffset();
   const local = new Date(now.getTime() - offset * 60 * 1000);
@@ -98,6 +116,7 @@ const inputClass = [
   "transition-all duration-300",
   "placeholder:text-zinc-400",
   insetShadow,
+  insetShadowFocus,
 ].join(" ");
 
 const textareaClass = [
@@ -160,12 +179,18 @@ function SectionCard({
 export default function NewTradePage() {
   const router = useRouter();
 
-  const [symbol, setSymbol] = useState("");
-  const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
-  const [lots, setLots] = useState("");
+  /* ------------------------------------------------------------------------ */
+  /* Default Values                                                           */
+  /* ------------------------------------------------------------------------ */
 
-  const [entryTime, setEntryTime] = useState(getLocalDateTime());
-  const [exitTime, setExitTime] = useState("");
+  const [symbol, setSymbol] = useState("XAUUSD");
+  const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
+  const [lots, setLots] = useState("0.01");
+
+  const [entryTime, setEntryTime] = useState(
+    getLocalDateTimeMinus15Minutes(),
+  );
+  const [exitTime, setExitTime] = useState(getLocalDateTime());
 
   const [entryPrice, setEntryPrice] = useState("");
   const [exitPrice, setExitPrice] = useState("");
@@ -173,12 +198,14 @@ export default function NewTradePage() {
   const [takeProfit, setTakeProfit] = useState("");
   const [stopLoss, setStopLoss] = useState("");
 
-  const [pnl, setPnl] = useState("");
+  const [pnl, setPnl] = useState("100");
   const [fees, setFees] = useState("0");
   const [score, setScore] = useState("");
 
-  const [setup, setSetup] = useState("");
-  const [lesson, setLesson] = useState("");
+  const [setup, setSetup] = useState("Smart Money Concept");
+  const [lesson, setLesson] = useState(
+    "1 Session , 1 Strategy , 1 Trade",
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -411,7 +438,8 @@ export default function NewTradePage() {
                 className="text-[11px] font-normal uppercase tracking-[0.1em]"
                 style={{
                   ...numberFontStyle,
-                  color: direction === "LONG" ? PROFIT_COLOR : LOSS_COLOR,
+                  color:
+                    direction === "LONG" ? PROFIT_COLOR : LOSS_COLOR,
                 }}
               >
                 {direction} Trade
@@ -516,9 +544,10 @@ export default function NewTradePage() {
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {/* Entry */}
                 <div
-                  className={["rounded-2xl bg-[#eef1f5] p-4", insetShadow].join(
-                    " ",
-                  )}
+                  className={[
+                    "rounded-2xl bg-[#eef1f5] p-4",
+                    insetShadow,
+                  ].join(" ")}
                 >
                   <div className="mb-4 flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-zinc-500" />
@@ -563,9 +592,10 @@ export default function NewTradePage() {
 
                 {/* Exit */}
                 <div
-                  className={["rounded-2xl bg-[#eef1f5] p-4", insetShadow].join(
-                    " ",
-                  )}
+                  className={[
+                    "rounded-2xl bg-[#eef1f5] p-4",
+                    insetShadow,
+                  ].join(" ")}
                 >
                   <div className="mb-4 flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-zinc-300" />
