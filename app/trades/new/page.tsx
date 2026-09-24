@@ -185,7 +185,7 @@ export default function NewTradePage() {
 
   const [symbol, setSymbol] = useState("XAUUSD");
   const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
-  const [lots, setLots] = useState("0.01");
+  const [lots, setLots] = useState("0.1");
 
   const [entryTime, setEntryTime] = useState(
     getLocalDateTimeMinus15Minutes(),
@@ -481,7 +481,7 @@ export default function NewTradePage() {
                   <input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.1"
                     value={lots}
                     onChange={(e) => setLots(e.target.value)}
                     placeholder="0.00"
