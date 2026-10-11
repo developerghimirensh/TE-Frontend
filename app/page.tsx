@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import {
   ArrowDownRight,
@@ -11,125 +17,231 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  Gauge,
   Loader2,
   Target,
   TrendingDown,
   TrendingUp,
   Trophy,
   Wallet,
-  Gauge,
+  StickyNote,
 } from "lucide-react";
 
-import {
-  getStoredUser,
-  getTrades,
-  getAnalytics, 
-  type Trade,
-  type Analytics,
-} from "@/lib/api";
+import { getTrades, type Trade } from "@/lib/api";
 
 /* -------------------------------------------------------------------------- */
-/* Fonts                                                                      */
+/* Fonts, colors, and shadows                                                 */
 /* -------------------------------------------------------------------------- */
 
-const FONT_DISPLAY = '"Lucida Fax", "Lucida Bright", Georgia, serif';
-const FONT_NUMBERS = '"Rubik", "Gotham", Arial, sans-serif';
+const FONT_DISPLAY = "var(--font-space-grotesk), sans-serif";
+const FONT_NUMBERS = "var(--font-inter), sans-serif";
 
 const displayFontStyle = {
   fontFamily: FONT_DISPLAY,
-  letterSpacing: "0.04em",
+  letterSpacing: "0.035em",
+  fontWeight: 650,
 } as const;
 
 const numberFontStyle = {
   fontFamily: FONT_NUMBERS,
-  letterSpacing: "0.04em",
+  letterSpacing: "0.015em",
+  fontVariantNumeric: "tabular-nums",
 } as const;
 
-/* -------------------------------------------------------------------------- */
-/* Colors                                                                     */
-/* -------------------------------------------------------------------------- */
-
-const PROFIT_COLOR = "#15803d";
-const PROFIT_BRIGHT = "#22c55e";
-
-const LOSS_COLOR = "#b91c1c";
-const LOSS_BRIGHT = "#ef4444";
-
-const SURFACE = "#eef1f5";
-
-/* -------------------------------------------------------------------------- */
-/* Shadows                                                                    */
-/* -------------------------------------------------------------------------- */
-
-/*
- * Base neumorphic shadow.
- *
- * IMPORTANT:
- * P&L cards remain completely neutral at rest.
- * Green/red glow is introduced only through hover shadows.
- */
+const PROFIT_COLOR = "#4ade80";
+const LOSS_COLOR = "#fb7185";
 
 const neutralShadow =
-  "shadow-[7px_7px_18px_rgba(163,177,198,0.24),-7px_-7px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_25px_rgba(163,177,198,0.30),-10px_-10px_25px_rgba(255,255,255,1)]";
+  "shadow-[inset_0_1px_2px_rgba(255,255,255,0.07),inset_0_-8px_18px_rgba(5,3,18,0.42),0_0_0_1px_rgba(167,139,250,0.22),0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[inset_0_1px_3px_rgba(255,255,255,0.1),inset_0_-8px_18px_rgba(5,3,18,0.35),0_0_0_1px_rgba(196,181,253,0.75),0_0_22px_rgba(139,92,246,0.24)]";
 
-/*
- * P&L shadow:
- * neutral at rest
- * P&L colored glow ONLY on hover
- */
-
-const profitShadow =
-  "shadow-[7px_7px_18px_rgba(163,177,198,0.24),-7px_-7px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_26px_rgba(163,177,198,0.26),-10px_-10px_26px_rgba(255,255,255,1)]";
-
-const lossShadow =
-  "shadow-[7px_7px_18px_rgba(163,177,198,0.24),-7px_-7px_18px_rgba(255,255,255,0.95)] hover:shadow-[10px_10px_26px_rgba(163,177,198,0.26),-10px_-10px_26px_rgba(255,255,255,1)]";
-
-/*
- * Inset neumorphism.
- */
+const profitShadow = neutralShadow;
 
 const insetShadow =
-  "shadow-[inset_5px_5px_12px_rgba(163,177,198,0.18),inset_-5px_-5px_12px_rgba(255,255,255,0.90)]";
+  "shadow-[inset_0_2px_5px_rgba(255,255,255,0.09),inset_0_-8px_18px_rgba(6,3,22,0.48),inset_0_0_22px_rgba(139,92,246,0.16)]";
 
 /* -------------------------------------------------------------------------- */
-/* Reusable P&L helpers                                                       */
+/* Reusable neumorphic dropdown                                               */
 /* -------------------------------------------------------------------------- */
 
-function pnlHoverBorder(positive: boolean): string {
+type SelectorOption = {
+  value: string;
+  label: string;
+};
+
+function NeumorphicSelect({
+  value,
+  onChange,
+  options,
+  ariaLabel,
+  className = "",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectorOption[];
+  ariaLabel: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption =
+    options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className={`relative min-w-0 ${className}`}>
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className={[
+          "flex h-10 w-full min-w-0 items-center justify-between gap-3",
+          "rounded-xl border border-violet-300/50 bg-[#121026] px-3.5",
+          "text-left transition-all duration-200",
+          "shadow-[0_0_0_1px_rgba(167,139,250,0.12),0_8px_20px_rgba(0,0,0,0.35)]",
+          "hover:border-violet-300/75 hover:shadow-[0_0_0_1px_rgba(167,139,250,0.55),0_0_18px_rgba(139,92,246,0.18)]",
+          "active:shadow-[inset_0_0_14px_rgba(139,92,246,0.18)]",
+          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-400/80",
+        ].join(" ")}
+      >
+        <span
+          className="min-w-0 truncate text-[10px] text-violet-100"
+          style={numberFontStyle}
+        >
+          {selectedOption?.label ?? "Select period"}
+        </span>
+
+        <ChevronRight
+          size={13}
+          className={[
+            "shrink-0 text-violet-300/85 transition-transform duration-200",
+            open ? "-rotate-90" : "rotate-90",
+          ].join(" ")}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label={ariaLabel}
+          className={[
+            "absolute right-0 top-[calc(100%+9px)] z-[100]",
+            "max-h-64 min-w-full overflow-y-auto",
+            "rounded-xl border border-violet-300/55 bg-[#121026] p-2",
+            "shadow-[0_16px_45px_rgba(0,0,0,0.65),0_0_0_1px_rgba(167,139,250,0.35)]",
+            "animate-in fade-in slide-in-from-top-1 duration-150",
+          ].join(" ")}
+        >
+          <div className="flex flex-col gap-1">
+            {options.map((option) => {
+              const selected = option.value === value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={[
+                    "flex w-full items-center justify-between gap-4",
+                    "whitespace-nowrap rounded-lg px-3 py-2.5 text-left",
+                    "text-[10px] transition-all duration-200",
+                    selected
+                      ? "border border-violet-300/50 bg-[#121026] text-violet-50 shadow-[inset_0_0_14px_rgba(139,92,246,0.14)]"
+                      : "border border-transparent text-violet-200 hover:border-violet-400/30 hover:shadow-[0_0_0_1px_rgba(167,139,250,0.35),0_0_12px_rgba(139,92,246,0.10)]",
+                  ].join(" ")}
+                  style={numberFontStyle}
+                >
+                  <span>{option.label}</span>
+                  {selected && (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-300" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* P&L helpers                                                                */
+/* -------------------------------------------------------------------------- */
+
+function pnlHoverBorder(positive: boolean) {
   return positive
-    ? "border-zinc-300/70 hover:border-green-300/30"
-    : "border-zinc-300/70 hover:border-red-300/30";
+    ? "border-violet-300/50 hover:border-green-400/50"
+    : "border-violet-300/50 hover:border-red-400/50";
 }
 
-function pnlShadow(positive: boolean): string {
-  return positive ? profitShadow : lossShadow;
+function pnlShadow(_positive: boolean) {
+  return profitShadow;
 }
 
-function pnlTextColor(positive: boolean): string {
+function pnlTextColor(positive: boolean) {
   return positive ? PROFIT_COLOR : LOSS_COLOR;
 }
 
-function pnlIconColor(positive: boolean): string {
-  return positive ? "text-green-700" : "text-red-700";
+function pnlIconColor(positive: boolean) {
+  return positive ? "text-green-400" : "text-rose-400";
 }
 
 /* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
+/* Data helpers                                                               */
 /* -------------------------------------------------------------------------- */
 
 function toNum(value: unknown): number {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
 }
 
 function getNetPnl(trade: Trade): number {
   return toNum(trade.pnl) - toNum(trade.fees);
 }
 
-function fmtMoney(value: number): string {
-  const abs = Math.abs(value);
+function isClosedTrade(trade: Trade): boolean {
+  return (
+    trade.exit_time !== null &&
+    trade.exit_time !== undefined &&
+    trade.exit_price !== null &&
+    trade.exit_price !== undefined
+  );
+}
 
-  return `$${abs.toLocaleString("en-US", {
+function fmtMoney(value: number): string {
+  return `$${Math.abs(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -147,7 +259,6 @@ function fmtDate(value: unknown): string {
   if (!value) return "—";
 
   const date = new Date(String(value));
-
   if (Number.isNaN(date.getTime())) return "—";
 
   return date.toLocaleDateString("en-US", {
@@ -159,21 +270,15 @@ function fmtDate(value: unknown): string {
 
 function monthKey(value: unknown): string {
   const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "unknown";
 
-  if (Number.isNaN(date.getTime())) {
-    return "unknown";
-  }
-
-  return `${date.getFullYear()}-${String(
-    date.getMonth() + 1,
-  ).padStart(2, "0")}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function monthYearLabel(key: string): string {
   if (key === "unknown") return "Unknown Date";
 
   const [year, month] = key.split("-").map(Number);
-
   if (!year || !month) return "Unknown Date";
 
   return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
@@ -186,7 +291,6 @@ function shortMonthLabel(key: string): string {
   if (key === "unknown") return "Unknown";
 
   const [year, month] = key.split("-").map(Number);
-
   if (!year || !month) return "Unknown";
 
   return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
@@ -197,30 +301,105 @@ function shortMonthLabel(key: string): string {
 
 function dayKey(value: unknown): string {
   const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "unknown";
 
-  if (Number.isNaN(date.getTime())) {
-    return "unknown";
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function getMonthDate(key: string): Date | null {
   if (key === "unknown") return null;
 
   const [year, month] = key.split("-").map(Number);
-
   if (!year || !month) return null;
 
   return new Date(year, month - 1, 1);
 }
 
+function sortTradesNewestFirst(trades: Trade[]): Trade[] {
+  return [...trades].sort(
+    (a, b) =>
+      new Date(String(b.exit_time)).getTime() -
+      new Date(String(a.exit_time)).getTime(),
+  );
+}
+
 /* -------------------------------------------------------------------------- */
-/* Stat Card                                                                  */
+/* Reusable panel                                                             */
+/* -------------------------------------------------------------------------- */
+
+function Panel({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={[
+        "min-w-0 rounded-[20px] border border-violet-300/50",
+        "bg-[#17142d] p-4 sm:p-5",
+        neutralShadow,
+        className,
+      ].join(" ")}
+    >
+      {children}
+    </section>
+  );
+}
+
+function SectionHeading({
+  title,
+  subtitle,
+  icon,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2.5">
+        {icon && (
+          <div
+            className={[
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+              "border border-violet-400/30 bg-[#121026] text-violet-300",
+              insetShadow,
+            ].join(" ")}
+          >
+            {icon}
+          </div>
+        )}
+
+        <div className="min-w-0">
+          <h2
+            className="truncate text-[16px] text-violet-50"
+            style={displayFontStyle}
+          >
+            {title}
+          </h2>
+
+          {subtitle && (
+            <p
+              className="mt-0.5 text-[10px] text-violet-300/85"
+              style={numberFontStyle}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {action}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Stat card                                                                  */
 /* -------------------------------------------------------------------------- */
 
 function StatCard({
@@ -234,66 +413,65 @@ function StatCard({
   label: string;
   value: string;
   subtitle: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   positive?: boolean;
   valueColor?: string;
 }) {
   const isPnlCard = positive !== undefined;
-
-  const shadow = isPnlCard
-    ? pnlShadow(positive)
-    : neutralShadow;
+  const accent =
+    valueColor ??
+    (positive === true
+      ? PROFIT_COLOR
+      : positive === false
+        ? LOSS_COLOR
+        : "#c4b5fd");
 
   return (
     <div
       className={[
-        "group w-full rounded-[18px] border bg-[#eef1f5] p-3.5",
-        "transition-all duration-300 hover:-translate-y-1",
-        isPnlCard
-          ? pnlHoverBorder(positive)
-          : "border-zinc-300/70",
-        shadow,
+        "group relative flex min-h-[112px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl border",
+        "border-violet-400/45 bg-gradient-to-br from-[#20183b] via-[#17132d] to-[#100e20] p-3.5 sm:p-4",
+        "shadow-[inset_0_2px_5px_rgba(255,255,255,0.10),inset_0_-12px_22px_rgba(4,2,16,0.58),inset_0_0_20px_rgba(139,92,246,0.17),0_0_0_1px_rgba(167,139,250,0.10)]",
+        "transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-300/80 hover:shadow-[inset_0_2px_6px_rgba(255,255,255,0.12),inset_0_-12px_22px_rgba(4,2,16,0.48),inset_0_0_25px_rgba(139,92,246,0.24),0_0_22px_rgba(139,92,246,0.18)]",
+        isPnlCard ? pnlHoverBorder(positive) : "",
       ].join(" ")}
     >
-      <div className="mb-3 flex items-start justify-between">
-        <div>
-          <p
-            className="text-[9px] uppercase tracking-[0.14em] text-zinc-400"
-            style={numberFontStyle}
-          >
-            {label}
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className="truncate text-[9px] font-semibold uppercase tracking-[0.15em] text-violet-200/90"
+          style={numberFontStyle}
+        >
+          {label}
+        </p>
 
-        <div
-          className={[
-            "flex h-8 w-8 items-center justify-center rounded-xl",
-            "bg-[#eef1f5]",
-            positive === true
-              ? "text-green-700"
-              : positive === false
-                ? "text-red-700"
-                : "text-zinc-500",
-            insetShadow,
-          ].join(" ")}
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-violet-300/35 bg-[#100d20]"
+          style={{
+            color: accent,
+            boxShadow:
+              "inset 0 2px 5px rgba(255,255,255,.08), inset 0 -5px 12px rgba(0,0,0,.55), 0 0 15px rgba(139,92,246,.14)",
+          }}
         >
           {icon}
-        </div>
-      </div>
-
-      <div
-        className="text-[20px] font-medium tracking-tight sm:text-[22px]"
-        style={{
-          ...numberFontStyle,
-          color: valueColor || "#18181b",
-        }}
-      >
-        {value}
+        </span>
       </div>
 
       <p
-        className="mt-1 text-[9px] text-zinc-400"
+        className="mt-2 truncate text-[clamp(17px,1.55vw,23px)] font-bold leading-tight tracking-[0.025em]"
+        style={{
+          ...numberFontStyle,
+          color: accent,
+          textShadow: "0 0 18px rgba(167,139,250,.16)",
+        }}
+        title={value}
+      >
+        {value}
+      </p>
+
+      <p
+        className="mt-2 truncate text-[9px] font-medium text-violet-300/90"
         style={numberFontStyle}
+        title={subtitle}
       >
         {subtitle}
       </p>
@@ -302,7 +480,7 @@ function StatCard({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Calendar Day                                                               */
+/* Calendar day                                                               */
 /* -------------------------------------------------------------------------- */
 
 function CalendarDay({
@@ -316,9 +494,7 @@ function CalendarDay({
   trades: number;
   isToday: boolean;
 }) {
-  if (!day) {
-    return <div className="min-h-[74px]" />;
-  }
+  if (!day) return <div className="min-h-[62px] rounded-lg" />;
 
   const hasTrades = trades > 0;
   const positive = pnl >= 0;
@@ -326,25 +502,19 @@ function CalendarDay({
   return (
     <div
       className={[
-        "group relative min-h-[74px] rounded-xl border bg-[#eef1f5] p-2",
-        hasTrades
-          ? pnlHoverBorder(positive)
-          : "border-zinc-300/60",
-        "transition-all duration-300 hover:-translate-y-[2px]",
-        hasTrades
-          ? pnlShadow(positive)
-          : neutralShadow,
-        isToday ? "ring-1 ring-zinc-300" : "",
+        "group relative min-h-[62px] min-w-0 rounded-lg border",
+        "bg-[#121026] p-1.5 sm:p-2",
+        hasTrades ? pnlHoverBorder(positive) : "border-violet-400/30",
+        "transition-all duration-200 hover:-translate-y-px",
+        hasTrades ? pnlShadow(positive) : neutralShadow,
+        isToday ? "ring-1 ring-violet-400/70" : "",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-1">
         <span
           className={[
-            "flex h-6 w-6 items-center justify-center rounded-lg",
-            "text-[10px]",
-            isToday
-              ? "bg-zinc-900 text-white shadow-md"
-              : "text-zinc-500",
+            "flex h-5 w-5 items-center justify-center rounded-md text-[9px]",
+            isToday ? "bg-violet-600 text-white" : "text-violet-300",
           ].join(" ")}
           style={numberFontStyle}
         >
@@ -353,7 +523,7 @@ function CalendarDay({
 
         {hasTrades && (
           <span
-            className="text-[8px] text-zinc-400"
+            className="text-[7px] text-violet-300/85"
             style={numberFontStyle}
           >
             {trades}T
@@ -362,64 +532,32 @@ function CalendarDay({
       </div>
 
       {hasTrades ? (
-        <div
-          className="mt-3 truncate text-[11px]"
+        <p
+          className="mt-2 truncate text-[9px] sm:text-[10px]"
           style={{
             ...numberFontStyle,
             color: pnlTextColor(positive),
           }}
+          title={fmtSignedMoney(pnl)}
         >
           {fmtSignedMoney(pnl)}
-        </div>
+        </p>
       ) : (
-        <div
-          className="mt-3 text-[8px] uppercase tracking-[0.08em] text-zinc-300"
-          style={numberFontStyle}
-        >
-          —
-        </div>
+        <p className="mt-2 text-[8px] text-violet-400/60">—</p>
       )}
     </div>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* Main Page                                                                  */
+/* Main dashboard                                                             */
 /* -------------------------------------------------------------------------- */
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [analytics, setAnalytics] =
-    useState<Analytics | null>(null);
-
   const [loading, setLoading] = useState(true);
-  const [error, setError] =
-    useState<string | null>(null);
-
-  const [firstName, setFirstName] = useState("Trader");
-  const [lastName, setLastName] = useState("Trader");
-
-  const [selectedMonth, setSelectedMonth] =
-    useState<string | null>(null);
-
-  /* ------------------------------------------------------------------------ */
-  /* Load User                                                                */
-  /* ------------------------------------------------------------------------ */
-
-  useEffect(() => {
-    const user = getStoredUser();
-
-    if (user?.first_name) {
-      setFirstName(user.first_name);
-    }
-    if (user?.last_name) {
-      setLastName(user.last_name);
-    }
-  }, []);
-
-  /* ------------------------------------------------------------------------ */
-  /* Load Dashboard                                                           */
-  /* ------------------------------------------------------------------------ */
+  const [error, setError] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -429,25 +567,10 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        const tradesResult = await getTrades();
+        const result = await getTrades();
 
         if (!cancelled) {
-          setTrades(tradesResult ?? []);
-        }
-
-        try {
-          const analyticsResult =
-            await getAnalytics();
-
-          if (!cancelled) {
-            setAnalytics(
-              analyticsResult ?? null,
-            );
-          }
-        } catch {
-          if (!cancelled) {
-            setAnalytics(null);
-          }
+          setTrades(result ?? []);
         }
       } catch (err) {
         if (!cancelled) {
@@ -471,27 +594,62 @@ export default function DashboardPage() {
     };
   }, []);
 
-  /* ------------------------------------------------------------------------ */
-  /* Closed Trades                                                            */
-  /* ------------------------------------------------------------------------ */
+  const closedTrades = useMemo(
+    () => trades.filter(isClosedTrade),
+    [trades],
+  );
 
-  const closedTrades = useMemo(() => {
-    return trades.filter(
-      (trade) =>
-        trade.exit_time !== null &&
-        trade.exit_time !== undefined &&
-        trade.exit_price !== null &&
-        trade.exit_price !== undefined,
-    );
-  }, [trades]);
+  const groupedTrades = useMemo(() => {
+    const groups: Record<string, Trade[]> = {};
 
-  /* ------------------------------------------------------------------------ */
-  /* Analytics                                                                 */
-  /* ------------------------------------------------------------------------ */
+    for (const trade of closedTrades) {
+      const key = monthKey(trade.exit_time);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(trade);
+    }
+
+    return groups;
+  }, [closedTrades]);
+
+  const monthKeys = useMemo(
+    () =>
+      Object.keys(groupedTrades)
+        .filter((key) => key !== "unknown")
+        .sort((a, b) => b.localeCompare(a)),
+    [groupedTrades],
+  );
+
+  useEffect(() => {
+    if (selectedMonth !== "all" && !monthKeys.includes(selectedMonth)) {
+      setSelectedMonth("all");
+    }
+  }, [monthKeys, selectedMonth]);
+
+  const dashboardTrades = useMemo(
+    () =>
+      selectedMonth === "all"
+        ? closedTrades
+        : groupedTrades[selectedMonth] ?? [],
+    [selectedMonth, closedTrades, groupedTrades],
+  );
+
+  const periodLabel =
+    selectedMonth === "all"
+      ? "All Time"
+      : monthYearLabel(selectedMonth);
+
+  const dashboardPeriodOptions = useMemo<SelectorOption[]>(
+    () => [
+      { value: "all", label: "All Time" },
+      ...monthKeys.map((key) => ({
+        value: key,
+        label: monthYearLabel(key),
+      })),
+    ],
+    [monthKeys],
+  );
 
   const metrics = useMemo(() => {
-    const totalTrades = closedTrades.length;
-
     let totalPnl = 0;
     let grossProfit = 0;
     let grossLoss = 0;
@@ -502,9 +660,8 @@ export default function DashboardPage() {
     let bestTrade: Trade | null = null;
     let worstTrade: Trade | null = null;
 
-    for (const trade of closedTrades) {
+    for (const trade of dashboardTrades) {
       const pnl = getNetPnl(trade);
-
       totalPnl += pnl;
 
       if (pnl > 0) {
@@ -515,58 +672,20 @@ export default function DashboardPage() {
         losses.push(trade);
       }
 
-      if (
-        !bestTrade ||
-        pnl > getNetPnl(bestTrade)
-      ) {
-        bestTrade = trade;
-      }
-
-      if (
-        !worstTrade ||
-        pnl < getNetPnl(worstTrade)
-      ) {
-        worstTrade = trade;
-      }
+      if (!bestTrade || pnl > getNetPnl(bestTrade)) bestTrade = trade;
+      if (!worstTrade || pnl < getNetPnl(worstTrade)) worstTrade = trade;
     }
 
+    const totalTrades = dashboardTrades.length;
     const winRate =
-      totalTrades > 0
-        ? (profits.length / totalTrades) * 100
-        : 0;
+      totalTrades > 0 ? (profits.length / totalTrades) * 100 : 0;
 
-    const calculatedProfitFactor =
+    const profitFactor =
       grossLoss > 0
         ? grossProfit / grossLoss
         : grossProfit > 0
           ? grossProfit
           : 0;
-
-    const backendProfitFactor =
-      analytics?.profit_factor !== null &&
-      analytics?.profit_factor !== undefined
-        ? toNum(analytics.profit_factor)
-        : null;
-
-    const profitFactor =
-      backendProfitFactor !== null
-        ? backendProfitFactor
-        : calculatedProfitFactor;
-
-    const averageTrade =
-      totalTrades > 0
-        ? totalPnl / totalTrades
-        : 0;
-
-    const averageWin =
-      profits.length > 0
-        ? grossProfit / profits.length
-        : 0;
-
-    const averageLoss =
-      losses.length > 0
-        ? grossLoss / losses.length
-        : 0;
 
     return {
       totalTrades,
@@ -577,104 +696,121 @@ export default function DashboardPage() {
       grossLoss,
       winRate,
       profitFactor,
-      averageTrade,
-      averageWin,
-      averageLoss,
+      averageTrade: totalTrades > 0 ? totalPnl / totalTrades : 0,
+      averageWin: profits.length > 0 ? grossProfit / profits.length : 0,
+      averageLoss: losses.length > 0 ? grossLoss / losses.length : 0,
       bestTrade,
       worstTrade,
     };
-  }, [closedTrades, analytics]);
+  }, [dashboardTrades]);
 
-  /* ------------------------------------------------------------------------ */
-  /* Group Trades by Month                                                    */
-  /* ------------------------------------------------------------------------ */
+  const dayStats = useMemo(() => {
+    const grouped: Record<string, { pnl: number; trades: number }> = {};
 
-  const groupedTrades = useMemo(() => {
-    const groups: Record<string, Trade[]> = {};
+    for (const trade of dashboardTrades) {
+      const key = dayKey(trade.exit_time);
 
-    for (const trade of closedTrades) {
-      const key = monthKey(trade.exit_time);
+      if (!grouped[key]) grouped[key] = { pnl: 0, trades: 0 };
 
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-
-      groups[key].push(trade);
+      grouped[key].pnl += getNetPnl(trade);
+      grouped[key].trades++;
     }
 
-    return groups;
-  }, [closedTrades]);
+    const days = Object.entries(grouped).filter(
+      ([key]) => key !== "unknown",
+    );
 
-  const monthKeys = useMemo(() => {
-    return Object.keys(groupedTrades)
-      .filter((key) => key !== "unknown")
-      .sort((a, b) => b.localeCompare(a));
-  }, [groupedTrades]);
-
-  useEffect(() => {
-    if (
-      !selectedMonth &&
-      monthKeys.length > 0
-    ) {
-      setSelectedMonth(monthKeys[0]);
+    if (days.length === 0) {
+      return {
+        best: null as [string, { pnl: number; trades: number }] | null,
+        worst: null as [string, { pnl: number; trades: number }] | null,
+      };
     }
-
-    if (
-      selectedMonth &&
-      monthKeys.length > 0 &&
-      !monthKeys.includes(selectedMonth)
-    ) {
-      setSelectedMonth(monthKeys[0]);
-    }
-  }, [monthKeys, selectedMonth]);
-
-  const currentMonthTrades = useMemo(() => {
-    if (!selectedMonth) return [];
-
-    return groupedTrades[selectedMonth] ?? [];
-  }, [groupedTrades, selectedMonth]);
-
-  /* ------------------------------------------------------------------------ */
-  /* Current Month Stats                                                      */
-  /* ------------------------------------------------------------------------ */
-
-  const currentMonthStats = useMemo(() => {
-    let pnl = 0;
-    let wins = 0;
-    let losses = 0;
-
-    for (const trade of currentMonthTrades) {
-      const tradePnl = getNetPnl(trade);
-
-      pnl += tradePnl;
-
-      if (tradePnl > 0) {
-        wins++;
-      } else if (tradePnl < 0) {
-        losses++;
-      }
-    }
-
-    const winRate =
-      currentMonthTrades.length > 0
-        ? (wins / currentMonthTrades.length) * 100
-        : 0;
 
     return {
-      pnl,
-      trades: currentMonthTrades.length,
-      wins,
-      losses,
-      winRate,
+      best: [...days].sort((a, b) => b[1].pnl - a[1].pnl)[0],
+      worst: [...days].sort((a, b) => a[1].pnl - b[1].pnl)[0],
     };
-  }, [currentMonthTrades]);
+  }, [dashboardTrades]);
 
-  /* ------------------------------------------------------------------------ */
-  /* Calendar Data                                                            */
-  /* ------------------------------------------------------------------------ */
+  const directionPerformance = useMemo(() => {
+    function calculate(direction: "LONG" | "SHORT") {
+      const matchingTrades = dashboardTrades.filter(
+        (trade) => trade.direction?.toUpperCase() === direction,
+      );
+
+      let pnl = 0;
+      let wins = 0;
+      let grossProfit = 0;
+      let grossLoss = 0;
+
+      for (const trade of matchingTrades) {
+        const net = getNetPnl(trade);
+        pnl += net;
+
+        if (net > 0) {
+          wins++;
+          grossProfit += net;
+        } else if (net < 0) {
+          grossLoss += Math.abs(net);
+        }
+      }
+
+      return {
+        direction,
+        trades: matchingTrades.length,
+        pnl,
+        wins,
+        losses: matchingTrades.filter((trade) => getNetPnl(trade) < 0)
+          .length,
+        winRate:
+          matchingTrades.length > 0
+            ? (wins / matchingTrades.length) * 100
+            : 0,
+        profitFactor:
+          grossLoss > 0
+            ? grossProfit / grossLoss
+            : grossProfit > 0
+              ? grossProfit
+              : 0,
+      };
+    }
+
+    return {
+      long: calculate("LONG"),
+      short: calculate("SHORT"),
+    };
+  }, [dashboardTrades]);
+
+  const calendarMonth =
+    selectedMonth === "all" ? monthKeys[0] ?? null : selectedMonth;
+
+  const calendarTrades = useMemo(
+    () => (calendarMonth ? groupedTrades[calendarMonth] ?? [] : []),
+    [calendarMonth, groupedTrades],
+  );
+
+  const calendarMonthIndex = calendarMonth
+    ? monthKeys.indexOf(calendarMonth)
+    : -1;
+
+  const hasPreviousMonth =
+    calendarMonthIndex >= 0 && calendarMonthIndex < monthKeys.length - 1;
+
+  const hasNextMonth = calendarMonthIndex > 0;
+
+  function changeMonth(direction: -1 | 1) {
+    if (calendarMonthIndex < 0) return;
+
+    const nextIndex = calendarMonthIndex + direction;
+
+    if (nextIndex >= 0 && nextIndex < monthKeys.length) {
+      setSelectedMonth(monthKeys[nextIndex]);
+    }
+  }
 
   const calendarData = useMemo(() => {
-    if (!selectedMonth) {
+    if (!calendarMonth) {
       return {
         cells: [] as Array<{
           day: number | null;
@@ -685,47 +821,21 @@ export default function DashboardPage() {
       };
     }
 
-    const date = getMonthDate(selectedMonth);
-
-    if (!date) {
-      return { cells: [] };
-    }
+    const date = getMonthDate(calendarMonth);
+    if (!date) return { cells: [] };
 
     const year = date.getFullYear();
     const month = date.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
 
-    const daysInMonth = new Date(
-      year,
-      month + 1,
-      0,
-    ).getDate();
+    const daily: Record<string, { pnl: number; trades: number }> = {};
 
-    const firstDay = new Date(
-      year,
-      month,
-      1,
-    ).getDay();
-
-    const daily: Record<
-      string,
-      {
-        pnl: number;
-        trades: number;
-      }
-    > = {};
-
-    for (const trade of currentMonthTrades) {
+    for (const trade of calendarTrades) {
       const key = dayKey(trade.exit_time);
-
-      if (!daily[key]) {
-        daily[key] = {
-          pnl: 0,
-          trades: 0,
-        };
-      }
-
+      if (!daily[key]) daily[key] = { pnl: 0, trades: 0 };
       daily[key].pnl += getNetPnl(trade);
-      daily[key].trades += 1;
+      daily[key].trades++;
     }
 
     const today = new Date();
@@ -738,257 +848,111 @@ export default function DashboardPage() {
     }> = [];
 
     for (let i = 0; i < firstDay; i++) {
-      cells.push({
-        day: null,
-        pnl: 0,
-        trades: 0,
-        isToday: false,
-      });
+      cells.push({ day: null, pnl: 0, trades: 0, isToday: false });
     }
 
-    for (
-      let day = 1;
-      day <= daysInMonth;
-      day++
-    ) {
-      const key = `${year}-${String(
-        month + 1,
-      ).padStart(2, "0")}-${String(day).padStart(
-        2,
-        "0",
-      )}`;
-
-      const info = daily[key] ?? {
-        pnl: 0,
-        trades: 0,
-      };
-
-      const isToday =
-        today.getFullYear() === year &&
-        today.getMonth() === month &&
-        today.getDate() === day;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const info = daily[key] ?? { pnl: 0, trades: 0 };
 
       cells.push({
         day,
         pnl: info.pnl,
         trades: info.trades,
-        isToday,
+        isToday:
+          today.getFullYear() === year &&
+          today.getMonth() === month &&
+          today.getDate() === day,
       });
     }
 
     while (cells.length % 7 !== 0) {
-      cells.push({
-        day: null,
-        pnl: 0,
-        trades: 0,
-        isToday: false,
-      });
+      cells.push({ day: null, pnl: 0, trades: 0, isToday: false });
     }
 
     return { cells };
-  }, [selectedMonth, currentMonthTrades]);
+  }, [calendarMonth, calendarTrades]);
 
-  /* ------------------------------------------------------------------------ */
-  /* Month Navigation                                                         */
-  /* ------------------------------------------------------------------------ */
+  const monthlyOverview = useMemo(
+    () =>
+      monthKeys.slice(0, 6).map((key) => {
+        const monthTrades = groupedTrades[key] ?? [];
+        let pnl = 0;
+        let wins = 0;
 
-  function changeMonth(direction: -1 | 1) {
-    if (
-      !selectedMonth ||
-      monthKeys.length === 0
-    ) {
-      return;
-    }
-
-    const index =
-      monthKeys.indexOf(selectedMonth);
-
-    if (index === -1) return;
-
-    const nextIndex = index + direction;
-
-    if (
-      nextIndex >= 0 &&
-      nextIndex < monthKeys.length
-    ) {
-      setSelectedMonth(
-        monthKeys[nextIndex],
-      );
-    }
-  }
-
-  /* ------------------------------------------------------------------------ */
-  /* Monthly Overview                                                         */
-  /* ------------------------------------------------------------------------ */
-
-  const monthlyOverview = useMemo(() => {
-    return monthKeys.slice(0, 6).map((key) => {
-      const monthTrades =
-        groupedTrades[key] ?? [];
-
-      let pnl = 0;
-      let wins = 0;
-
-      for (const trade of monthTrades) {
-        const tradePnl = getNetPnl(trade);
-
-        pnl += tradePnl;
-
-        if (tradePnl > 0) {
-          wins++;
+        for (const trade of monthTrades) {
+          const tradePnl = getNetPnl(trade);
+          pnl += tradePnl;
+          if (tradePnl > 0) wins++;
         }
-      }
 
-      const winRate =
-        monthTrades.length > 0
-          ? (wins / monthTrades.length) * 100
-          : 0;
+        return {
+          key,
+          label: shortMonthLabel(key),
+          pnl,
+          trades: monthTrades.length,
+          winRate:
+            monthTrades.length > 0
+              ? (wins / monthTrades.length) * 100
+              : 0,
+        };
+      }),
+    [monthKeys, groupedTrades],
+  );
 
-      return {
-        key,
-        label: shortMonthLabel(key),
-        pnl,
-        trades: monthTrades.length,
-        winRate,
-      };
-    });
-  }, [monthKeys, groupedTrades]);
-
-  /* ------------------------------------------------------------------------ */
-  /* Recent Trades                                                            */
-  /* ------------------------------------------------------------------------ */
-
-  const recentTrades = useMemo(() => {
-    return [...closedTrades]
-      .sort(
-        (a, b) =>
-          new Date(
-            String(b.exit_time),
-          ).getTime() -
-          new Date(
-            String(a.exit_time),
-          ).getTime(),
-      )
-      .slice(0, 5);
-  }, [closedTrades]);
-
-  /* ------------------------------------------------------------------------ */
-  /* Setup Performance                                                        */
-  /* ------------------------------------------------------------------------ */
+  const recentTrades = useMemo(
+    () => sortTradesNewestFirst(dashboardTrades).slice(0, 5),
+    [dashboardTrades],
+  );
 
   const setupPerformance = useMemo(() => {
     const grouped: Record<
       string,
-      {
-        trades: number;
-        pnl: number;
-        wins: number;
-      }
+      { trades: number; pnl: number; wins: number }
     > = {};
 
-    for (const trade of closedTrades) {
-      const setup =
-        trade.setup?.trim() ||
-        "No Setup";
-
-      if (!grouped[setup]) {
-        grouped[setup] = {
-          trades: 0,
-          pnl: 0,
-          wins: 0,
-        };
-      }
+    for (const trade of dashboardTrades) {
+      const setup = trade.setup?.trim() || "No Setup";
+      if (!grouped[setup]) grouped[setup] = { trades: 0, pnl: 0, wins: 0 };
 
       const pnl = getNetPnl(trade);
-
-      grouped[setup].trades += 1;
+      grouped[setup].trades++;
       grouped[setup].pnl += pnl;
-
-      if (pnl > 0) {
-        grouped[setup].wins += 1;
-      }
+      if (pnl > 0) grouped[setup].wins++;
     }
 
     return Object.entries(grouped)
       .map(([name, data]) => ({
         name,
         ...data,
-        winRate:
-          data.trades > 0
-            ? (data.wins / data.trades) * 100
-            : 0,
+        winRate: data.trades > 0 ? (data.wins / data.trades) * 100 : 0,
       }))
       .sort((a, b) => b.pnl - a.pnl)
       .slice(0, 5);
-  }, [closedTrades]);
+  }, [dashboardTrades]);
+
+  const tradesWithNotes = useMemo(
+    () => recentTrades.filter((trade) => Boolean(trade.lesson?.trim())),
+    [recentTrades],
+  );
 
   /* ------------------------------------------------------------------------ */
-  /* Best / Worst Trading Day                                                 */
-  /* ------------------------------------------------------------------------ */
-
-  const dayStats = useMemo(() => {
-    const grouped: Record<
-      string,
-      number
-    > = {};
-
-    for (const trade of closedTrades) {
-      const key = dayKey(
-        trade.exit_time,
-      );
-
-      grouped[key] =
-        (grouped[key] ?? 0) +
-        getNetPnl(trade);
-    }
-
-    const days = Object.entries(grouped);
-
-    if (days.length === 0) {
-      return {
-        best: null,
-        worst: null,
-      };
-    }
-
-    const best = [...days].sort(
-      (a, b) => b[1] - a[1],
-    )[0];
-
-    const worst = [...days].sort(
-      (a, b) => a[1] - b[1],
-    )[0];
-
-    return {
-      best,
-      worst,
-    };
-  }, [closedTrades]);
-
-  /* ------------------------------------------------------------------------ */
-  /* Loading                                                                  */
+  /* Loading state                                                            */
   /* ------------------------------------------------------------------------ */
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#eef1f5] px-5 py-8">
-        <div className="flex min-h-[70vh] items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
+      <main className="min-h-screen bg-[#121026] px-4 py-8">
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
             <div
-              className={[
-                "flex h-14 w-14 items-center justify-center rounded-2xl",
-                "bg-[#eef1f5]",
-                neutralShadow,
-              ].join(" ")}
+              className={`flex h-12 w-12 items-center justify-center rounded-xl bg-[#121026] ${neutralShadow}`}
             >
-              <Loader2
-                size={24}
-                className="animate-spin text-zinc-500"
-              />
+              <Loader2 size={22} className="animate-spin text-violet-300" />
             </div>
 
             <p
-              className="text-sm text-zinc-500"
+              className="text-xs text-violet-300"
               style={numberFontStyle}
             >
               Loading dashboard...
@@ -1000,29 +964,27 @@ export default function DashboardPage() {
   }
 
   /* ------------------------------------------------------------------------ */
-  /* Error                                                                    */
+  /* Error state                                                              */
   /* ------------------------------------------------------------------------ */
 
   if (error) {
     return (
-      <main className="min-h-screen bg-[#eef1f5] px-5 py-8">
-        <div className="mx-auto max-w-[1500px]">
-          <div
-            className={[
-              "rounded-[28px] border border-zinc-300/70",
-              "bg-[#eef1f5] p-8",
-              neutralShadow,
-            ].join(" ")}
+      <main className="min-h-screen bg-[#121026] px-4 py-8">
+        <div className="mx-auto max-w-5xl">
+          <h1
+            className="mb-5 bg-gradient-to-r from-violet-200 via-fuchsia-300 to-violet-400 bg-clip-text text-xl font-bold tracking-[0.06em] text-transparent sm:text-2xl"
+            style={displayFontStyle}
           >
-            <h2
-              className="text-xl text-zinc-900"
-              style={displayFontStyle}
-            >
+            The Millionaire Diary
+          </h1>
+
+          <Panel className="p-6 sm:p-8">
+            <h2 className="text-xl text-violet-50" style={displayFontStyle}>
               Unable to load dashboard
             </h2>
 
             <p
-              className="mt-3 whitespace-pre-line text-sm text-zinc-500"
+              className="mt-3 whitespace-pre-line text-sm text-violet-300"
               style={numberFontStyle}
             >
               {error}
@@ -1030,1297 +992,1017 @@ export default function DashboardPage() {
 
             <Link
               href="/trades/new"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-3 text-xs uppercase tracking-[0.12em] text-white transition hover:bg-zinc-800"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-[10px] uppercase tracking-[0.12em] text-white transition hover:bg-violet-500"
+              style={numberFontStyle}
             >
-              Add Trade
-              <ArrowRight size={14} />
+              Add Trade <ArrowRight size={13} />
             </Link>
-          </div>
+          </Panel>
         </div>
       </main>
     );
   }
 
   /* ------------------------------------------------------------------------ */
-  /* Empty Dashboard                                                          */
+  /* Empty state                                                              */
   /* ------------------------------------------------------------------------ */
 
   if (closedTrades.length === 0) {
     return (
       <main
-        className="min-h-screen bg-[#eef1f5] px-4 py-5 sm:px-6 lg:px-8"
+        className="min-h-screen bg-[#121026] px-4 py-5 sm:px-6 lg:px-8"
         style={numberFontStyle}
       >
         <div className="mx-auto max-w-[1500px]">
-          <header className="mb-8">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-
-              <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-400">
-                The Millionaire Diary
-              </span>
-            </div>
-
+          <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1
-              className="text-[28px] font-normal leading-tight tracking-tight text-zinc-950 sm:text-[34px]"
+              className="bg-gradient-to-r from-violet-200 via-fuchsia-300 to-violet-400 bg-clip-text text-xl font-bold tracking-[0.06em] text-transparent sm:text-2xl"
               style={displayFontStyle}
             >
-              Welcome Back, {firstName} {lastName}.
+              The Millionaire Diary
             </h1>
 
-            <p className="mt-2 text-sm text-zinc-400">
-              Your trading dashboard is ready. Start
-              recording your first trade.
-            </p>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <CalendarDays
+                size={14}
+                className="shrink-0 text-violet-300/85"
+              />
+
+              <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] text-violet-300/85">
+                Period
+              </span>
+
+              <NeumorphicSelect
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                ariaLabel="Dashboard period"
+                className="w-[175px]"
+                options={dashboardPeriodOptions}
+              />
+            </div>
           </header>
 
-          <div
-            className={[
-              "flex min-h-[460px] items-center justify-center",
-              "rounded-[28px] border border-zinc-300/70",
-              "bg-[#eef1f5]",
-              neutralShadow,
-            ].join(" ")}
-          >
-            <div className="w-full max-w-md px-6 text-center">
+          <Panel className="flex min-h-[350px] items-center justify-center p-6 sm:min-h-[400px]">
+            <div className="max-w-md text-center">
               <div
-                className={[
-                  "mx-auto mb-6 flex h-20 w-20 items-center justify-center",
-                  "rounded-[24px] border border-zinc-300/60",
-                  "bg-[#eef1f5] text-zinc-400",
-                  insetShadow,
-                ].join(" ")}
+                className={`mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/30 bg-[#121026] text-violet-300/85 ${insetShadow}`}
               >
-                <BarChart3
-                  size={30}
-                  strokeWidth={1.5}
-                />
+                <BarChart3 size={25} strokeWidth={1.5} />
               </div>
 
-              <h2
-                className="text-2xl text-zinc-900"
-                style={displayFontStyle}
-              >
+              <h2 className="text-xl text-violet-50" style={displayFontStyle}>
                 Build your journal
               </h2>
 
-              <p className="mt-3 text-sm leading-6 text-zinc-500">
-                Record your trades to see your P&L
-                calendar, win rate, setups, monthly
-                performance and trading statistics here.
+              <p
+                className="mt-2 text-xs leading-5 text-violet-300"
+                style={numberFontStyle}
+              >
+                Record your trades to unlock your P&amp;L calendar, win rate,
+                trading setups, notes, and monthly statistics.
               </p>
 
               <Link
                 href="/trades/new"
-                className="mt-7 inline-flex h-11 items-center gap-2 rounded-xl bg-zinc-900 px-6 text-[11px] uppercase tracking-[0.14em] text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-zinc-800"
+                className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-violet-600 px-5 text-[9px] uppercase tracking-[0.12em] text-white transition hover:-translate-y-0.5 hover:bg-violet-500"
+                style={numberFontStyle}
               >
-                <span className="text-lg leading-none">
-                  +
-                </span>
-                Add Your First Trade
+                + Add Your First Trade
               </Link>
             </div>
-          </div>
+          </Panel>
         </div>
       </main>
     );
   }
 
-  const pnlPositive =
-    metrics.totalPnl >= 0;
+  const pnlPositive = metrics.totalPnl >= 0;
+  const profitFactorPositive = metrics.profitFactor >= 1;
 
-  const selectedMonthIndex =
-    selectedMonth
-      ? monthKeys.indexOf(selectedMonth)
-      : -1;
-
-  const hasPreviousMonth =
-    selectedMonthIndex >= 0 &&
-    selectedMonthIndex <
-      monthKeys.length - 1;
-
-  const hasNextMonth =
-    selectedMonthIndex > 0;
-
-  const profitFactorPositive =
-    metrics.profitFactor >= 1;
+  /* ------------------------------------------------------------------------ */
+  /* Dashboard                                                                */
+  /* ------------------------------------------------------------------------ */
 
   return (
     <main
-      className="min-h-screen bg-[#eef1f5] px-4 py-5 sm:px-6 lg:px-8"
+      className="min-h-screen bg-[#121026] px-4 py-5 sm:px-6 lg:px-8"
       style={numberFontStyle}
     >
       <div className="mx-auto max-w-[1500px]">
+        {/* Header */}
 
-        {/* ================================================================ */}
-        {/* HEADER                                                           */}
-        {/* ================================================================ */}
+        <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1
+            className="bg-gradient-to-r from-violet-200 via-fuchsia-300 to-violet-400 bg-clip-text text-xl font-bold tracking-[0.06em] text-transparent sm:text-2xl"
+            style={displayFontStyle}
+          >
+            The Millionaire Diary
+          </h1>
 
-        <header className="mb-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <CalendarDays
+              size={14}
+              className="shrink-0 text-violet-300/85"
+            />
 
-                <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-400">
-                  The Millionaire Diary
-                </span>
-              </div>
+            <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] text-violet-300/85">
+              Period
+            </span>
 
-              <h1
-                className="text-[28px] font-normal leading-tight tracking-tight text-zinc-950 sm:text-[34px]"
-                style={displayFontStyle}
-              >
-                Welcome back, {firstName} {lastName}.
-              </h1>
-
-              <p className="mt-2 text-xs text-zinc-400 sm:text-sm">
-                Here's a clear view of your trading
-                performance and progress.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Link
-                href="/analytics"
-                className={[
-                  "inline-flex h-10 items-center gap-2 rounded-xl",
-                  "border border-zinc-300/70 bg-[#eef1f5] px-4",
-                  "text-[10px] uppercase tracking-[0.12em] text-zinc-500",
-                  "transition-all duration-300 hover:-translate-y-0.5",
-                  neutralShadow,
-                ].join(" ")}
-              >
-                <BarChart3 size={14} />
-                Analytics
-              </Link>
-
-              <Link
-                href="/trades/new"
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-zinc-900 px-5 text-[10px] uppercase tracking-[0.12em] text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-zinc-800"
-              >
-                <span className="text-base leading-none">
-                  +
-                </span>
-                Add Trade
-              </Link>
-            </div>
+            <NeumorphicSelect
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+              ariaLabel="Dashboard period"
+              className="w-[175px]"
+              options={dashboardPeriodOptions}
+            />
           </div>
         </header>
 
-        {/* ================================================================ */}
-        {/* STAT CARDS                                                        */}
-        {/* ================================================================ */}
+        {/* Performance overview */}
 
-        <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-
-          <StatCard
-            label="Total P&L"
-            value={fmtSignedMoney(
-              metrics.totalPnl,
-            )}
-            subtitle={`${metrics.totalTrades} completed trades`}
-            icon={
-              pnlPositive ? (
-                <TrendingUp size={20} />
-              ) : (
-                <TrendingDown size={20} />
-              )
-            }
-            positive={pnlPositive}
-            valueColor={pnlPositive
-              ? PROFIT_COLOR
-              : LOSS_COLOR}
+        <Panel className="mb-5 p-4 sm:p-5">
+          <SectionHeading
+            title="Performance Overview"
+            subtitle={`Key trading statistics for ${periodLabel.toLowerCase()}`}
+            icon={<Gauge size={15} />}
           />
 
-          <StatCard
-            label="Win Rate"
-            value={fmtPercent(
-              metrics.winRate,
-            )}
-            subtitle={`${metrics.profits.length} winning trades`}
-            icon={<Target size={20} />}
-            positive={
-              metrics.winRate >= 50
-            }
-            valueColor={
-              metrics.winRate >= 50
-                ? PROFIT_COLOR
-                : LOSS_COLOR
-            }
-          />
+          <section className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+            <StatCard
+              label="Total P&L"
+              value={fmtSignedMoney(metrics.totalPnl)}
+              subtitle={`${metrics.totalTrades} completed trades`}
+              icon={
+                pnlPositive ? (
+                  <TrendingUp size={14} />
+                ) : (
+                  <TrendingDown size={14} />
+                )
+              }
+              positive={pnlPositive}
+              valueColor={pnlPositive ? PROFIT_COLOR : LOSS_COLOR}
+            />
 
-          <StatCard
-            label="Average Win"
-            value={`+${fmtMoney(
-              metrics.averageWin,
-            )}`}
-            subtitle="Average profitable trade"
-            icon={<ArrowUpRight size={20} />}
-            positive={true}
-            valueColor={PROFIT_COLOR}
-          />
+            <StatCard
+              label="Win Rate"
+              value={fmtPercent(metrics.winRate)}
+              subtitle={`${metrics.profits.length} winning trades`}
+              icon={<Target size={14} />}
+              positive={metrics.winRate >= 50}
+              valueColor={metrics.winRate >= 50 ? PROFIT_COLOR : LOSS_COLOR}
+            />
 
-          <StatCard
-            label="Average Loss"
-            value={`-${fmtMoney(
-              metrics.averageLoss,
-            )}`}
-            subtitle="Average losing trade"
-            icon={
-              <ArrowDownRight size={20} />
-            }
-            positive={false}
-            valueColor={LOSS_COLOR}
-          />
+            <StatCard
+              label="Average Win"
+              value={`+${fmtMoney(metrics.averageWin)}`}
+              subtitle="Average profitable trade"
+              icon={<ArrowUpRight size={14} />}
+              positive
+              valueColor={PROFIT_COLOR}
+            />
 
-          <StatCard
-            label="Profit Factor"
-            value={
-              metrics.profitFactor > 0
-                ? metrics.profitFactor.toFixed(2)
-                : "0.00"
-            }
-            subtitle={
-              profitFactorPositive
-                ? "Profitable edge"
-                : "Needs improvement"
-            }
-            icon={<Gauge size={20} />}
-            positive={
-              profitFactorPositive
-            }
-            valueColor={
-              profitFactorPositive
-                ? PROFIT_COLOR
-                : LOSS_COLOR
-            }
-          />
-        </section>
+            <StatCard
+              label="Average Loss"
+              value={`-${fmtMoney(metrics.averageLoss)}`}
+              subtitle="Average losing trade"
+              icon={<ArrowDownRight size={14} />}
+              positive={false}
+              valueColor={LOSS_COLOR}
+            />
 
-        {/* ================================================================ */}
-        {/* CALENDAR + MONTH DASHBOARD                                        */}
-        {/* ================================================================ */}
+            <StatCard
+              label="Profit Factor"
+              value={metrics.profitFactor.toFixed(2)}
+              subtitle={
+                profitFactorPositive ? "Profitable edge" : "Needs improvement"
+              }
+              icon={<Gauge size={14} />}
+              positive={profitFactorPositive}
+              valueColor={profitFactorPositive ? PROFIT_COLOR : LOSS_COLOR}
+            />
+          </section>
 
-        <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_0.6fr]">
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            <StatCard
+              label="Best Trade"
+              value={
+                metrics.bestTrade
+                  ? fmtSignedMoney(getNetPnl(metrics.bestTrade))
+                  : "—"
+              }
+              subtitle={metrics.bestTrade?.symbol ?? "No trade data"}
+              icon={<Trophy size={14} />}
+              positive
+              valueColor={PROFIT_COLOR}
+            />
 
-          {/* Calendar */}
+            <StatCard
+              label="Worst Trade"
+              value={
+                metrics.worstTrade
+                  ? fmtSignedMoney(getNetPnl(metrics.worstTrade))
+                  : "—"
+              }
+              subtitle={metrics.worstTrade?.symbol ?? "No trade data"}
+              icon={<TrendingDown size={14} />}
+              positive={false}
+              valueColor={LOSS_COLOR}
+            />
 
-          <div
-            className={[
-              "rounded-[26px] border border-zinc-300/70",
-              "bg-[#eef1f5] p-1",
-              neutralShadow,
-            ].join(" ")}
-          >
-            <div className="px-5 py-5 sm:px-7">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={[
-                      "flex h-10 w-10 items-center justify-center rounded-xl",
-                      "border border-zinc-300/60 bg-[#eef1f5] text-zinc-500",
-                      insetShadow,
-                    ].join(" ")}
-                  >
-                    <CalendarDays size={17} />
-                  </div>
+            <StatCard
+              label="Best Trading Day"
+              value={dayStats.best ? fmtSignedMoney(dayStats.best[1].pnl) : "—"}
+              subtitle={dayStats.best ? fmtDate(dayStats.best[0]) : "No day data"}
+              icon={<CalendarDays size={14} />}
+              positive
+              valueColor={PROFIT_COLOR}
+            />
 
-                  <div>
-                    <h2
-                      className="text-[18px] text-zinc-900"
-                      style={displayFontStyle}
-                    >
-                      Trading Calendar
-                    </h2>
+            <StatCard
+              label="Worst Trading Day"
+              value={
+                dayStats.worst ? fmtSignedMoney(dayStats.worst[1].pnl) : "—"
+              }
+              subtitle={
+                dayStats.worst ? fmtDate(dayStats.worst[0]) : "No day data"
+              }
+              icon={<CalendarDays size={14} />}
+              positive={false}
+              valueColor={LOSS_COLOR}
+            />
+          </section>
+        </Panel>
 
-                    <p className="mt-0.5 text-[10px] text-zinc-400">
-                      Daily realized P&L
-                    </p>
-                  </div>
+        {/* Calendar and recent trades */}
+
+        <section className="mb-5 grid grid-cols-1 items-stretch gap-4 xl:grid-cols-5">
+          <Panel className="col-span-3 flex h-full min-w-0 flex-col p-3 sm:p-4">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <SectionHeading
+                title="Trading Calendar"
+                subtitle={
+                  selectedMonth === "all"
+                    ? "Daily P&L for your latest active month"
+                    : "Daily realized P&L for the selected month"
+                }
+                icon={<CalendarDays size={15} />}
+              />
+
+              <div className="mb-4 flex items-center gap-1.5 sm:mb-0">
+                <button
+                  type="button"
+                  disabled={!hasPreviousMonth}
+                  onClick={() => changeMonth(1)}
+                  aria-label="Previous month with trades"
+                  className={[
+                    "flex h-8 w-8 items-center justify-center rounded-lg border",
+                    "border-violet-300/50 bg-[#121026] text-violet-300",
+                    "transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-30",
+                    neutralShadow,
+                  ].join(" ")}
+                >
+                  <ChevronLeft size={15} />
+                </button>
+
+                <div
+                  className={[
+                    "min-w-[125px] rounded-lg border border-violet-400/30",
+                    "bg-[#121026] px-2.5 py-2 text-center",
+                    "text-[9px] uppercase tracking-[0.12em] text-violet-200",
+                    insetShadow,
+                  ].join(" ")}
+                >
+                  {calendarMonth ? monthYearLabel(calendarMonth) : "No Month"}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={
-                      !hasPreviousMonth
-                    }
-                    onClick={() =>
-                      changeMonth(1)
-                    }
-                    className={[
-                      "flex h-9 w-9 items-center justify-center rounded-xl",
-                      "border border-zinc-300/70 bg-[#eef1f5] text-zinc-500",
-                      "transition-all hover:-translate-y-0.5",
-                      "disabled:cursor-not-allowed disabled:opacity-30",
-                      neutralShadow,
-                    ].join(" ")}
-                    aria-label="Previous month"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-
-                  <div
-                    className={[
-                      "min-w-[155px] rounded-xl border border-zinc-300/60",
-                      "bg-[#eef1f5] px-4 py-2 text-center",
-                      "text-[11px] uppercase tracking-[0.1em] text-zinc-600",
-                      insetShadow,
-                    ].join(" ")}
-                  >
-                    {selectedMonth
-                      ? monthYearLabel(
-                          selectedMonth,
-                        )
-                      : "Select Month"}
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={
-                      !hasNextMonth
-                    }
-                    onClick={() =>
-                      changeMonth(-1)
-                    }
-                    className={[
-                      "flex h-9 w-9 items-center justify-center rounded-xl",
-                      "border border-zinc-300/70 bg-[#eef1f5] text-zinc-500",
-                      "transition-all hover:-translate-y-0.5",
-                      "disabled:cursor-not-allowed disabled:opacity-30",
-                      neutralShadow,
-                    ].join(" ")}
-                    aria-label="Next month"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={!hasNextMonth}
+                  onClick={() => changeMonth(-1)}
+                  aria-label="Next month with trades"
+                  className={[
+                    "flex h-8 w-8 items-center justify-center rounded-lg border",
+                    "border-violet-300/50 bg-[#121026] text-violet-300",
+                    "transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-30",
+                    neutralShadow,
+                  ].join(" ")}
+                >
+                  <ChevronRight size={15} />
+                </button>
               </div>
+            </div>
 
-              <div className="mt-7">
-                <div className="mb-3 grid grid-cols-7 gap-2">
-                  {[
-                    "Sun",
-                    "Mon",
-                    "Tue",
-                    "Wed",
-                    "Thu",
-                    "Fri",
-                    "Sat",
-                  ].map((day) => (
+            <div className="grid flex-1 grid-rows-[auto_1fr]">
+              <div className="mb-2 grid grid-cols-7 gap-1.5 sm:gap-2">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                  (day) => (
                     <div
                       key={day}
-                      className="py-1 text-center text-[9px] uppercase tracking-[0.12em] text-zinc-400"
+                      className="py-1 text-center text-[8px] uppercase tracking-[0.12em] text-violet-300/85"
                     >
                       {day}
                     </div>
-                  ))}
-                </div>
+                  ),
+                )}
+              </div>
 
-                <div className="grid grid-cols-7 gap-2">
-                  {calendarData.cells.map(
-                    (cell, index) => (
-                      <CalendarDay
-                        key={`${selectedMonth}-${index}`}
-                        day={cell.day}
-                        pnl={cell.pnl}
-                        trades={cell.trades}
-                        isToday={
-                          cell.isToday
-                        }
-                      />
-                    ),
-                  )}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-5">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-green-600 shadow-[0_0_10px_rgba(21,128,61,0.55)]" />
-                    <span className="text-[9px] uppercase tracking-[0.08em] text-zinc-400">
-                      Profitable
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(185,28,28,0.55)]" />
-                    <span className="text-[9px] uppercase tracking-[0.08em] text-zinc-400">
-                      Losing
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-zinc-300" />
-                    <span className="text-[9px] uppercase tracking-[0.08em] text-zinc-400">
-                      No trades
-                    </span>
-                  </div>
-                </div>
+              <div className="grid grid-cols-7 content-start gap-1.5 sm:gap-2">
+                {calendarData.cells.map((cell, index) => (
+                  <CalendarDay
+                    key={`${calendarMonth}-${index}`}
+                    day={cell.day}
+                    pnl={cell.pnl}
+                    trades={cell.trades}
+                    isToday={cell.isToday}
+                  />
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Month Dashboard */}
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-violet-400/25 pt-3">
+              {[
+                { label: "Profitable", dot: "bg-green-400" },
+                { label: "Losing", dot: "bg-rose-400" },
+                { label: "No trades", dot: "bg-zinc-300" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${item.dot}`} />
+                  <span className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Panel>
 
-          <div
-            className={[
-              "rounded-[26px] border border-zinc-300/70",
-              "bg-[#eef1f5] p-5 sm:p-6",
-              neutralShadow,
-            ].join(" ")}
-          >
-            <div className="mb-6 flex items-center justify-between">
+          <Panel className="col-span-2 flex h-full min-w-0 flex-col p-3 sm:p-4">
+            <SectionHeading
+              title="Recent Trades"
+              subtitle={`Latest completed positions · ${periodLabel}`}
+              icon={<CalendarDays size={15} />}
+              action={
+                <Link
+                  href="/trades"
+                  className="inline-flex shrink-0 items-center gap-1 text-[8px] uppercase tracking-[0.12em] text-violet-300/85 transition hover:text-violet-50"
+                >
+                  View All <ArrowRight size={11} />
+                </Link>
+              }
+            />
+
+            <div className="flex flex-1 flex-col gap-2">
+              {recentTrades.map((trade) => {
+                const pnl = getNetPnl(trade);
+                const positive = pnl >= 0;
+
+                return (
+                  <Link
+                    key={trade.id}
+                    href={`/trades/${trade.id}`}
+                    className={[
+                      "group flex min-w-0 flex-1 items-center justify-between gap-3",
+                      "rounded-xl border bg-[#121026] px-3 py-2.5",
+                      "transition-all duration-300 hover:-translate-y-0.5",
+                      pnlHoverBorder(positive),
+                      pnlShadow(positive),
+                    ].join(" ")}
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <div
+                        className={[
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                          "border border-violet-400/30 bg-[#121026]",
+                          pnlIconColor(positive),
+                          insetShadow,
+                        ].join(" ")}
+                      >
+                        {trade.direction?.toUpperCase() === "SHORT" ? (
+                          <TrendingDown size={14} />
+                        ) : (
+                          <TrendingUp size={14} />
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p
+                          className="truncate text-[12px] text-violet-100"
+                          style={displayFontStyle}
+                        >
+                          {trade.symbol}
+                        </p>
+
+                        <p
+                          className="mt-1 truncate text-[8px] text-violet-300/85"
+                          style={numberFontStyle}
+                        >
+                          {trade.direction} <span className="px-1">·</span>
+                          {fmtDate(trade.exit_time)}
+                          <span className="px-1">·</span>
+                          {trade.lots} lots
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <p
+                        className="text-[11px]"
+                        style={{
+                          ...numberFontStyle,
+                          color: pnlTextColor(positive),
+                        }}
+                      >
+                        {fmtSignedMoney(pnl)}
+                      </p>
+
+                      <p
+                        className="mt-1 text-[8px] text-violet-300/85"
+                        style={numberFontStyle}
+                      >
+                        Net P&amp;L
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+
+              {recentTrades.length === 0 && (
+                <div className="flex flex-1 items-center justify-center rounded-xl border border-violet-400/30 text-xs text-violet-300/85">
+                  No completed trades for this period.
+                </div>
+              )}
+            </div>
+          </Panel>
+        </section>
+
+        {/* Selected-period statistics and monthly performance */}
+
+        <section className="mb-5 grid grid-cols-1 items-start gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <Panel className="p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <p className="text-[9px] uppercase tracking-[0.14em] text-zinc-400">
-                  Selected Month
+                <p className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                  Selected Period
                 </p>
 
                 <h2
-                  className="mt-1 text-[20px] text-zinc-900"
+                  className="mt-1 text-[18px] text-violet-50"
                   style={displayFontStyle}
                 >
-                  {selectedMonth
-                    ? monthYearLabel(
-                        selectedMonth,
-                      )
-                    : "—"}
+                  {periodLabel}
                 </h2>
               </div>
 
               <div
                 className={[
-                  "flex h-11 w-11 items-center justify-center rounded-xl",
-                  "border border-zinc-300/60 bg-[#eef1f5]",
-                  pnlIconColor(
-                    currentMonthStats.pnl >= 0,
-                  ),
+                  "flex h-9 w-9 items-center justify-center rounded-lg",
+                  "border border-violet-400/30 bg-[#121026]",
+                  pnlIconColor(metrics.totalPnl >= 0),
                   insetShadow,
                 ].join(" ")}
               >
-                {currentMonthStats.pnl >=
-                0 ? (
-                  <TrendingUp size={18} />
+                {metrics.totalPnl >= 0 ? (
+                  <TrendingUp size={16} />
                 ) : (
-                  <TrendingDown size={18} />
+                  <TrendingDown size={16} />
                 )}
               </div>
             </div>
-
-            {/* Monthly P&L */}
 
             <div
               className={[
-                "rounded-2xl border bg-[#eef1f5] p-5",
-                "transition-all duration-300 hover:-translate-y-1",
-                pnlHoverBorder(
-                  currentMonthStats.pnl >=
-                    0,
-                ),
-                pnlShadow(
-                  currentMonthStats.pnl >=
-                    0,
-                ),
+                "rounded-xl border bg-[#121026] p-4",
+                "transition-all duration-300 hover:-translate-y-0.5",
+                pnlHoverBorder(metrics.totalPnl >= 0),
+                pnlShadow(metrics.totalPnl >= 0),
               ].join(" ")}
             >
-              <p className="text-[9px] uppercase tracking-[0.12em] text-zinc-400">
-                Monthly Net P&L
+              <p className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                Net P&amp;L
               </p>
 
-              <div
-                className="mt-2 text-[29px] font-medium tracking-tight"
+              <p
+                className="mt-1.5 text-[25px] font-medium tracking-tight"
                 style={{
                   ...numberFontStyle,
-                  color:
-                    currentMonthStats.pnl >=
-                    0
-                      ? PROFIT_COLOR
-                      : LOSS_COLOR,
+                  color: metrics.totalPnl >= 0 ? PROFIT_COLOR : LOSS_COLOR,
                 }}
               >
-                {fmtSignedMoney(
-                  currentMonthStats.pnl,
-                )}
-              </div>
+                {fmtSignedMoney(metrics.totalPnl)}
+              </p>
 
-              <p className="mt-1 text-[10px] text-zinc-400">
-                {currentMonthStats.trades}{" "}
-                completed trades
+              <p
+                className="mt-1 text-[9px] text-violet-300/85"
+                style={numberFontStyle}
+              >
+                {metrics.totalTrades} completed trades
               </p>
             </div>
 
-            {/* Month Mini Stats */}
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               {[
                 {
                   label: "Win Rate",
-                  value: fmtPercent(
-                    currentMonthStats.winRate,
-                  ),
-                  color: "#27272a",
-                  positive:
-                    undefined as
-                      | boolean
-                      | undefined,
+                  value: fmtPercent(metrics.winRate),
+                  color: "#ede9fe",
                 },
                 {
                   label: "Winning",
-                  value:
-                    currentMonthStats.wins,
+                  value: String(metrics.profits.length),
                   color: PROFIT_COLOR,
-                  positive: true,
                 },
                 {
                   label: "Losing",
-                  value:
-                    currentMonthStats.losses,
+                  value: String(metrics.losses.length),
                   color: LOSS_COLOR,
-                  positive: false,
                 },
                 {
-                  label: "Avg Trade",
+                  label: "Average Trade",
                   value:
-                    currentMonthStats.trades >
-                    0
-                      ? fmtSignedMoney(
-                          currentMonthStats.pnl /
-                            currentMonthStats.trades,
-                        )
+                    metrics.totalTrades > 0
+                      ? fmtSignedMoney(metrics.averageTrade)
                       : "$0.00",
-                  color:
-                    currentMonthStats.pnl >=
-                    0
-                      ? PROFIT_COLOR
-                      : LOSS_COLOR,
-                  positive:
-                    currentMonthStats.pnl >=
-                    0,
+                  color: metrics.averageTrade >= 0 ? PROFIT_COLOR : LOSS_COLOR,
                 },
-              ].map((item) => {
-                const isPnl =
-                  item.positive !==
-                  undefined;
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className={[
+                    "rounded-lg border border-violet-400/30 bg-[#121026] p-3",
+                    neutralShadow,
+                  ].join(" ")}
+                >
+                  <p className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                    {item.label}
+                  </p>
 
-                return (
-                  <div
-                    key={item.label}
-                    className={[
-                      "rounded-2xl border bg-[#eef1f5] p-4",
-                      "transition-all duration-300 hover:-translate-y-0.5",
-                      isPnl
-                        ? pnlHoverBorder(
-                            item.positive as boolean,
-                          )
-                        : "border-zinc-300/60",
-                      isPnl
-                        ? pnlShadow(
-                            item.positive as boolean,
-                          )
-                        : neutralShadow,
-                    ].join(" ")}
+                  <p
+                    className="mt-1.5 truncate text-[14px]"
+                    style={{ ...numberFontStyle, color: item.color }}
                   >
-                    <p className="text-[8px] uppercase tracking-[0.1em] text-zinc-400">
-                      {item.label}
-                    </p>
-
-                    <p
-                      className="mt-2 text-[17px]"
-                      style={{
-                        ...numberFontStyle,
-                        color: item.color,
-                      }}
-                    >
-                      {item.value}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Recent Months */}
-
-            <div className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-[9px] uppercase tracking-[0.12em] text-zinc-400">
-                  Recent Months
-                </p>
-
-                <Link
-                  href="/analytics"
-                  className="text-[9px] uppercase tracking-[0.1em] text-zinc-400 transition hover:text-zinc-800"
-                >
-                  Analytics
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                {monthlyOverview.map(
-                  (month) => {
-                    const positive =
-                      month.pnl >= 0;
-
-                    const active =
-                      month.key ===
-                      selectedMonth;
-
-                    return (
-                      <button
-                        key={month.key}
-                        type="button"
-                        onClick={() =>
-                          setSelectedMonth(
-                            month.key,
-                          )
-                        }
-                        className={[
-                          "flex w-full items-center justify-between gap-3 rounded-xl border bg-[#eef1f5] px-4 py-3 text-left",
-                          "transition-all duration-300 hover:-translate-y-0.5",
-                          pnlHoverBorder(
-                            positive,
-                          ),
-                          pnlShadow(
-                            positive,
-                          ),
-                          active
-                            ? "scale-[1.01] ring-1 ring-zinc-400/60"
-                            : "",
-                        ].join(" ")}
-                      >
-                        <div>
-                          <p className="text-[10px] text-zinc-600">
-                            {month.label}
-                          </p>
-
-                          <p className="mt-1 text-[8px] text-zinc-400">
-                            {month.trades}{" "}
-                            trades ·{" "}
-                            {fmtPercent(
-                              month.winRate,
-                            )}
-                          </p>
-                        </div>
-
-                        <span
-                          className="text-[10px]"
-                          style={{
-                            ...numberFontStyle,
-                            color:
-                              positive
-                                ? PROFIT_COLOR
-                                : LOSS_COLOR,
-                          }}
-                        >
-                          {fmtSignedMoney(
-                            month.pnl,
-                          )}
-                        </span>
-                      </button>
-                    );
-                  },
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ================================================================ */}
-        {/* BEST / WORST DAY                                                  */}
-        {/* ================================================================ */}
-
-        <section className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-
-          {/* Best Trading Day */}
-
-          <div
-            className={[
-              "rounded-[22px] border bg-[#eef1f5] p-5",
-              "border-zinc-300/70 hover:border-green-600/10",
-              "transition-all duration-300 hover:-translate-y-1",
-              profitShadow,
-            ].join(" ")}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.12em] text-zinc-400">
-                  Best Trading Day
-                </p>
-
-                <p
-                  className="mt-2 text-[17px] text-zinc-800"
-                  style={numberFontStyle}
-                >
-                  {dayStats.best
-                    ? fmtDate(
-                        dayStats.best[0],
-                      )
-                    : "—"}
-                </p>
-              </div>
-
-              <div
-                className={[
-                  "flex h-10 w-10 items-center justify-center rounded-xl",
-                  "border border-zinc-300/60",
-                  "bg-[#eef1f5] text-green-700",
-                  insetShadow,
-                ].join(" ")}
-              >
-                <TrendingUp size={17} />
-              </div>
-            </div>
-
-            {dayStats.best && (
-              <p
-                className="mt-2 text-[14px]"
-                style={{
-                  ...numberFontStyle,
-                  color: PROFIT_COLOR,
-                }}
-              >
-                {fmtSignedMoney(
-                  dayStats.best[1],
-                )}
-              </p>
-            )}
-          </div>
-
-          {/* Worst Trading Day */}
-
-          <div
-            className={[
-              "rounded-[22px] border bg-[#eef1f5] p-5",
-              "border-zinc-300/70 hover:border-red-600/10",
-              "transition-all duration-300 hover:-translate-y-1",
-              lossShadow,
-            ].join(" ")}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.12em] text-zinc-400">
-                  Worst Trading Day
-                </p>
-
-                <p
-                  className="mt-2 text-[17px] text-zinc-800"
-                  style={numberFontStyle}
-                >
-                  {dayStats.worst
-                    ? fmtDate(
-                        dayStats.worst[0],
-                      )
-                    : "—"}
-                </p>
-              </div>
-
-              <div
-                className={[
-                  "flex h-10 w-10 items-center justify-center rounded-xl",
-                  "border border-zinc-300/60",
-                  "bg-[#eef1f5] text-red-700",
-                  insetShadow,
-                ].join(" ")}
-              >
-                <TrendingDown size={17} />
-              </div>
-            </div>
-
-            {dayStats.worst && (
-              <p
-                className="mt-2 text-[14px]"
-                style={{
-                  ...numberFontStyle,
-                  color: LOSS_COLOR,
-                }}
-              >
-                {fmtSignedMoney(
-                  dayStats.worst[1],
-                )}
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* ================================================================ */}
-        {/* RECENT TRADES + SETUPS                                            */}
-        {/* ================================================================ */}
-
-        <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-
-          {/* Recent Trades */}
-
-          <div
-            className={[
-              "rounded-[26px] border border-zinc-300/70",
-              "bg-[#eef1f5] p-1",
-              neutralShadow,
-            ].join(" ")}
-          >
-            <div className="px-6 py-5 sm:px-7">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <CalendarDays
-                      size={16}
-                      className="text-zinc-500"
-                    />
-
-                    <h2
-                      className="text-[17px] text-zinc-900"
-                      style={displayFontStyle}
-                    >
-                      Recent Trades
-                    </h2>
-                  </div>
-
-                  <p className="mt-1 text-[10px] text-zinc-400">
-                    Your latest completed positions.
+                    {item.value}
                   </p>
                 </div>
+              ))}
+            </div>
+          </Panel>
 
-                <Link
-                  href="/trades"
-                  className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.12em] text-zinc-400 transition hover:text-zinc-900"
+          <Panel className="p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2
+                  className="text-[16px] text-violet-50"
+                  style={displayFontStyle}
                 >
-                  View All
-                  <ArrowRight size={12} />
-                </Link>
-              </div>
+                  Monthly Performance
+                </h2>
 
-              <div className="space-y-3">
-                {recentTrades.map(
-                  (trade) => {
-                    const pnl =
-                      getNetPnl(trade);
-
-                    const positive =
-                      pnl >= 0;
-
-                    return (
-                      <Link
-                        key={trade.id}
-                        href={`/trades/${trade.id}`}
-                        className={[
-                          "group flex items-center justify-between gap-4 rounded-2xl border bg-[#eef1f5] px-5 py-4",
-                          "transition-all duration-300 hover:-translate-y-1",
-                          pnlHoverBorder(
-                            positive,
-                          ),
-                          pnlShadow(
-                            positive,
-                          ),
-                        ].join(" ")}
-                      >
-                        <div className="flex min-w-0 items-center gap-4">
-                          <div
-                            className={[
-                              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                              "border border-zinc-300/60 bg-[#eef1f5]",
-                              pnlIconColor(
-                                positive,
-                              ),
-                              insetShadow,
-                            ].join(" ")}
-                          >
-                            {trade.direction?.slice(
-                              0,
-                              1,
-                            )}
-                          </div>
-
-                          <div className="min-w-0">
-                            <div
-                              className="truncate text-[14px] text-zinc-800"
-                              style={
-                                displayFontStyle
-                              }
-                            >
-                              {trade.symbol}
-                            </div>
-
-                            <div className="mt-1 flex items-center gap-2 text-[9px] text-zinc-400">
-                              <span>
-                                {
-                                  trade.direction
-                                }
-                              </span>
-
-                              <span>•</span>
-
-                              <span>
-                                {fmtDate(
-                                  trade.exit_time,
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <div
-                            className="text-[13px]"
-                            style={{
-                              ...numberFontStyle,
-                              color:
-                                positive
-                                  ? PROFIT_COLOR
-                                  : LOSS_COLOR,
-                            }}
-                          >
-                            {fmtSignedMoney(
-                              pnl,
-                            )}
-                          </div>
-
-                          <div className="mt-1 text-[9px] text-zinc-400">
-                            {trade.lots} lots
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  },
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Setup Performance */}
-
-          <div
-            className={[
-              "rounded-[26px] border border-zinc-300/70",
-              "bg-[#eef1f5] p-6 sm:p-7",
-              neutralShadow,
-            ].join(" ")}
-          >
-            <div className="mb-6 flex items-center gap-2">
-              <FileText
-                size={16}
-                className="text-zinc-500"
-              />
-
-              <h2
-                className="text-[17px] text-zinc-900"
-                style={displayFontStyle}
-              >
-                Setup Performance
-              </h2>
-            </div>
-
-            {setupPerformance.length ===
-            0 ? (
-              <div
-                className={[
-                  "flex h-[180px] items-center justify-center rounded-2xl",
-                  "border border-zinc-300/60",
-                  "bg-[#eef1f5]",
-                  insetShadow,
-                ].join(" ")}
-              >
-                <p className="text-sm text-zinc-400">
-                  No setup data yet
+                <p
+                  className="mt-1 text-[9px] text-violet-300/85"
+                  style={numberFontStyle}
+                >
+                  Select a month to filter the dashboard.
                 </p>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {setupPerformance.map(
-                  (setup) => {
-                    const positive =
-                      setup.pnl >= 0;
+
+              <Link
+                href="/analytics"
+                className="shrink-0 text-[8px] uppercase tracking-[0.12em] text-violet-300/85 transition hover:text-violet-50"
+              >
+                Analytics
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {monthlyOverview.map((month) => {
+                const positive = month.pnl >= 0;
+                const active = month.key === selectedMonth;
+
+                return (
+                  <button
+                    key={month.key}
+                    type="button"
+                    onClick={() => setSelectedMonth(month.key)}
+                    className={[
+                      "flex min-w-0 items-center justify-between gap-3 rounded-xl border",
+                      "bg-[#121026] px-3 py-3 text-left",
+                      "transition-all duration-300 hover:-translate-y-0.5",
+                      pnlHoverBorder(positive),
+                      pnlShadow(positive),
+                      active ? "ring-1 ring-violet-400/70" : "",
+                    ].join(" ")}
+                  >
+                    <div className="min-w-0">
+                      <p
+                        className="truncate text-[10px] text-violet-200"
+                        style={numberFontStyle}
+                      >
+                        {month.label}
+                      </p>
+
+                      <p
+                        className="mt-1 text-[8px] text-violet-300/85"
+                        style={numberFontStyle}
+                      >
+                        {month.trades} trades · {fmtPercent(month.winRate)}
+                      </p>
+                    </div>
+
+                    <span
+                      className="shrink-0 text-[10px]"
+                      style={{
+                        ...numberFontStyle,
+                        color: pnlTextColor(positive),
+                      }}
+                    >
+                      {fmtSignedMoney(month.pnl)}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {monthlyOverview.length === 0 && (
+                <p className="py-8 text-center text-xs text-violet-300/85 sm:col-span-2">
+                  No monthly performance data.
+                </p>
+              )}
+            </div>
+
+            {selectedMonth !== "all" && (
+              <button
+                type="button"
+                onClick={() => setSelectedMonth("all")}
+                className="mt-3 text-[8px] uppercase tracking-[0.12em] text-violet-300 transition hover:text-violet-50"
+              >
+                View All Time
+              </button>
+            )}
+          </Panel>
+        </section>
+
+        {/* Long vs. Short performance */}
+
+        <section className="mb-5">
+          <Panel className="p-4 sm:p-5">
+            <SectionHeading
+              title="Long vs. Short Performance"
+              subtitle={`Direction comparison for ${periodLabel.toLowerCase()}`}
+              icon={<BarChart3 size={15} />}
+            />
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {[
+                {
+                  ...directionPerformance.long,
+                  title: "Long Positions",
+                  icon: <TrendingUp size={16} />,
+                  positive: directionPerformance.long.pnl >= 0,
+                },
+                {
+                  ...directionPerformance.short,
+                  title: "Short Positions",
+                  icon: <TrendingDown size={16} />,
+                  positive: directionPerformance.short.pnl >= 0,
+                },
+              ].map((item) => (
+                <div
+                  key={item.direction}
+                  className={[
+                    "min-w-0 rounded-xl border bg-[#121026] p-4",
+                    "transition-all duration-300 hover:-translate-y-0.5",
+                    pnlHoverBorder(item.positive),
+                    pnlShadow(item.positive),
+                  ].join(" ")}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <div
+                        className={[
+                          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                          "border border-violet-400/30 bg-[#121026]",
+                          pnlIconColor(item.positive),
+                          insetShadow,
+                        ].join(" ")}
+                      >
+                        {item.icon}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p
+                          className="text-[13px] text-violet-100"
+                          style={displayFontStyle}
+                        >
+                          {item.title}
+                        </p>
+
+                        <p
+                          className="mt-1 text-[8px] text-violet-300/85"
+                          style={numberFontStyle}
+                        >
+                          {item.trades} trades · {item.wins} wins ·{" "}
+                          {item.losses} losses
+                        </p>
+                      </div>
+                    </div>
+
+                    <p
+                      className="shrink-0 text-[15px]"
+                      style={{
+                        ...numberFontStyle,
+                        color: pnlTextColor(item.positive),
+                      }}
+                    >
+                      {fmtSignedMoney(item.pnl)}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div
+                      className={`rounded-lg border border-violet-400/30 bg-[#121026] p-3 ${insetShadow}`}
+                    >
+                      <p className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                        Win Rate
+                      </p>
+
+                      <p
+                        className="mt-1.5 text-[16px]"
+                        style={{
+                          ...numberFontStyle,
+                          color: item.winRate >= 50 ? PROFIT_COLOR : "#a1a1aa",
+                        }}
+                      >
+                        {fmtPercent(item.winRate)}
+                      </p>
+                    </div>
+
+                    <div
+                      className={`rounded-lg border border-violet-400/30 bg-[#121026] p-3 ${insetShadow}`}
+                    >
+                      <p className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                        Profit Factor
+                      </p>
+
+                      <p
+                        className="mt-1.5 text-[16px]"
+                        style={{
+                          ...numberFontStyle,
+                          color:
+                            item.profitFactor >= 1
+                              ? PROFIT_COLOR
+                              : LOSS_COLOR,
+                        }}
+                      >
+                        {item.profitFactor.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between text-[8px] text-violet-300/85">
+                    <span>Share of selected-period trades</span>
+
+                    <span style={numberFontStyle}>
+                      {metrics.totalTrades > 0
+                        ? fmtPercent(
+                            (item.trades / metrics.totalTrades) * 100,
+                          )
+                        : "0.0%"}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`mt-2 h-1.5 overflow-hidden rounded-full border border-violet-400/25 bg-[#151322] ${insetShadow}`}
+                  >
+                    <div
+                      className={`h-full rounded-full ${
+                        item.direction === "LONG"
+                          ? "bg-green-400"
+                          : "bg-rose-400"
+                      }`}
+                      style={{
+                        width: `${
+                          metrics.totalTrades > 0
+                            ? (item.trades / metrics.totalTrades) * 100
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </section>
+
+        {/* Trade notes and setup performance */}
+
+        <section className="mb-5 grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2">
+          <div className="min-w-0">
+            <Panel className="h-full p-4">
+              <SectionHeading
+                title="Trade Notes"
+                subtitle="Lessons and observations from your recent trades"
+                icon={<StickyNote size={15} />}
+              />
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {tradesWithNotes.slice(0, 6).map((trade) => (
+                  <Link
+                    key={trade.id}
+                    href={`/trades/${trade.id}`}
+                    className={[
+                      "min-w-0 rounded-xl border border-violet-400/30",
+                      "bg-[#121026] p-3.5",
+                      "transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-300/70",
+                      neutralShadow,
+                    ].join(" ")}
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p
+                        className="truncate text-[11px] text-violet-100"
+                        style={displayFontStyle}
+                      >
+                        {trade.symbol}
+                      </p>
+
+                      <span
+                        className="shrink-0 text-[8px] text-violet-300/85"
+                        style={numberFontStyle}
+                      >
+                        {fmtDate(trade.exit_time)}
+                      </span>
+                    </div>
+
+                    <p
+                      className="line-clamp-3 whitespace-pre-wrap break-words text-[10px] leading-5 text-violet-300"
+                      style={numberFontStyle}
+                    >
+                      {trade.lesson}
+                    </p>
+
+                    <div className="mt-2 flex items-center justify-between gap-2 border-t border-violet-400/25 pt-2">
+                      <span className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                        {trade.setup?.trim() || "No setup"}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1 text-[8px] text-violet-300/85">
+                        View trade <ArrowRight size={10} />
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+
+                {tradesWithNotes.length === 0 && (
+                  <div
+                    className={[
+                      "rounded-xl border border-violet-400/30 bg-[#121026]",
+                      "px-4 py-8 text-center md:col-span-2 xl:col-span-3",
+                      insetShadow,
+                    ].join(" ")}
+                  >
+                    <StickyNote
+                      size={20}
+                      className="mx-auto mb-2 text-violet-400/60"
+                    />
+
+                    <p className="text-xs text-violet-300">
+                      No trade notes for this period
+                    </p>
+
+                    <p className="mt-1 text-[9px] text-violet-300/85">
+                      Add notes or lessons when recording a trade to see them
+                      here.
+                    </p>
+
+                    <Link
+                      href="/trades"
+                      className="mt-3 inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.12em] text-violet-300 hover:text-violet-50"
+                    >
+                      Browse trades <ArrowRight size={11} />
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </Panel>
+          </div>
+
+          <div className="min-w-0">
+            <Panel className="h-full p-4">
+              <SectionHeading
+                title="Setup Performance"
+                subtitle={`Your strongest recorded setups · ${periodLabel}`}
+                icon={<FileText size={15} />}
+              />
+
+              {setupPerformance.length === 0 ? (
+                <div
+                  className={`flex min-h-[120px] items-center justify-center rounded-xl border border-violet-400/30 bg-[#121026] text-xs text-violet-300/85 ${insetShadow}`}
+                >
+                  No setup data for this period
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {setupPerformance.map((setup) => {
+                    const positive = setup.pnl >= 0;
 
                     return (
                       <div
                         key={setup.name}
                         className={[
-                          "rounded-2xl border bg-[#eef1f5] p-4",
-                          "transition-all duration-300 hover:-translate-y-0.5",
-                          pnlHoverBorder(
-                            positive,
-                          ),
-                          pnlShadow(
-                            positive,
-                          ),
+                          "rounded-xl border bg-[#121026] p-3",
+                          "transition-all duration-300 hover:-translate-y-px",
+                          pnlHoverBorder(positive),
+                          pnlShadow(positive),
                         ].join(" ")}
                       >
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <span className="truncate text-[11px] text-zinc-600">
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <span className="truncate text-[10px] text-violet-200">
                             {setup.name}
                           </span>
 
                           <span
-                            className="text-[10px]"
+                            className="shrink-0 text-[10px]"
                             style={{
                               ...numberFontStyle,
-                              color:
-                                positive
-                                  ? PROFIT_COLOR
-                                  : LOSS_COLOR,
+                              color: pnlTextColor(positive),
                             }}
                           >
-                            {fmtSignedMoney(
-                              setup.pnl,
-                            )}
+                            {fmtSignedMoney(setup.pnl)}
                           </span>
                         </div>
 
                         <div
-                          className={[
-                            "h-1.5 overflow-hidden rounded-full",
-                            "border border-zinc-300/40 bg-[#e6e9ee]",
-                            insetShadow,
-                          ].join(" ")}
+                          className={`h-1.5 overflow-hidden rounded-full border border-violet-400/25 bg-[#151322] ${insetShadow}`}
                         >
                           <div
-                            className={[
-                              "h-full rounded-full",
-                              positive
-                                ? "bg-green-700 shadow-[0_0_8px_rgba(21,128,61,0.45)]"
-                                : "bg-red-700 shadow-[0_0_8px_rgba(185,28,28,0.45)]",
-                            ].join(" ")}
+                            className={`h-full rounded-full ${
+                              positive ? "bg-green-400" : "bg-rose-400"
+                            }`}
                             style={{
                               width: `${Math.min(
-                                Math.max(
-                                  setup.winRate,
-                                  8,
-                                ),
+                                Math.max(setup.winRate, 5),
                                 100,
                               )}%`,
                             }}
                           />
                         </div>
 
-                        <div className="mt-3 flex justify-between text-[8px] uppercase tracking-[0.08em] text-zinc-400">
-                          <span>
-                            {setup.trades}{" "}
-                            trades
-                          </span>
-
-                          <span>
-                            {fmtPercent(
-                              setup.winRate,
-                            )}{" "}
-                            win rate
-                          </span>
+                        <div className="mt-2 flex justify-between gap-2 text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
+                          <span>{setup.trades} trades</span>
+                          <span>{fmtPercent(setup.winRate)} win rate</span>
                         </div>
                       </div>
                     );
-                  },
-                )}
-              </div>
-            )}
+                  })}
+                </div>
+              )}
+            </Panel>
           </div>
         </section>
 
-        {/* ================================================================ */}
-        {/* BEST / WORST TRADE                                                */}
-        {/* ================================================================ */}
+        {/* Footer */}
 
-        <section className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-
-          {/* Best Trade */}
-
+        <section className="pb-5">
           <div
             className={[
-              "rounded-[22px] border bg-[#eef1f5] p-5",
-              "border-zinc-300/70 hover:border-green-600/10",
-              "transition-all duration-300 hover:-translate-y-1",
-              profitShadow,
-            ].join(" ")}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.12em] text-zinc-400">
-                  Best Trade
-                </p>
-
-                <p
-                  className="mt-1.5 text-lg text-zinc-900"
-                  style={displayFontStyle}
-                >
-                  {metrics.bestTrade
-                    ?.symbol ?? "—"}
-                </p>
-              </div>
-
-              <div
-                className={[
-                  "flex h-10 w-10 items-center justify-center rounded-xl",
-                  "border border-zinc-300/60",
-                  "bg-[#eef1f5] text-green-700",
-                  insetShadow,
-                ].join(" ")}
-              >
-                <Trophy size={17} />
-              </div>
-            </div>
-
-            {metrics.bestTrade && (
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-[9px] text-zinc-400">
-                    {fmtDate(
-                      metrics.bestTrade
-                        .exit_time,
-                    )}
-                  </p>
-
-                  <p className="mt-1 text-[9px] uppercase tracking-[0.08em] text-zinc-400">
-                    {
-                      metrics.bestTrade
-                        .direction
-                    }{" "}
-                    ·{" "}
-                    {
-                      metrics.bestTrade
-                        .lots
-                    }{" "}
-                    lots
-                  </p>
-                </div>
-
-                <span
-                  className="text-[14px]"
-                  style={{
-                    ...numberFontStyle,
-                    color: PROFIT_COLOR,
-                  }}
-                >
-                  {fmtSignedMoney(
-                    getNetPnl(
-                      metrics.bestTrade,
-                    ),
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Largest Loss */}
-
-          <div
-            className={[
-              "rounded-[22px] border bg-[#eef1f5] p-5",
-              "border-zinc-300/70 hover:border-red-600/10",
-              "transition-all duration-300 hover:-translate-y-1",
-              lossShadow,
-            ].join(" ")}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.12em] text-zinc-400">
-                  Largest Loss
-                </p>
-
-                <p
-                  className="mt-1.5 text-lg text-zinc-900"
-                  style={displayFontStyle}
-                >
-                  {metrics.worstTrade
-                    ?.symbol ?? "—"}
-                </p>
-              </div>
-
-              <div
-                className={[
-                  "flex h-10 w-10 items-center justify-center rounded-xl",
-                  "border border-zinc-300/60",
-                  "bg-[#eef1f5] text-red-700",
-                  insetShadow,
-                ].join(" ")}
-              >
-                <TrendingDown size={17} />
-              </div>
-            </div>
-
-            {metrics.worstTrade && (
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-[9px] text-zinc-400">
-                    {fmtDate(
-                      metrics.worstTrade
-                        .exit_time,
-                    )}
-                  </p>
-
-                  <p className="mt-1 text-[9px] uppercase tracking-[0.08em] text-zinc-400">
-                    {
-                      metrics.worstTrade
-                        .direction
-                    }{" "}
-                    ·{" "}
-                    {
-                      metrics.worstTrade
-                        .lots
-                    }{" "}
-                    lots
-                  </p>
-                </div>
-
-                <span
-                  className="text-[14px]"
-                  style={{
-                    ...numberFontStyle,
-                    color: LOSS_COLOR,
-                  }}
-                >
-                  {fmtSignedMoney(
-                    getNetPnl(
-                      metrics.worstTrade,
-                    ),
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ================================================================ */}
-        {/* FOOTER                                                           */}
-        {/* ================================================================ */}
-
-        <section className="mt-5 pb-5">
-          <div
-            className={[
-              "flex flex-col gap-4 rounded-[22px]",
-              "border border-zinc-300/70",
-              "bg-[#eef1f5] px-6 py-5",
-              "sm:flex-row sm:items-center sm:justify-between",
+              "flex flex-col gap-3 rounded-[18px] border border-violet-300/50",
+              "bg-[#121026] px-4 py-4 sm:flex-row sm:items-center sm:justify-between",
               neutralShadow,
             ].join(" ")}
           >
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-3">
               <div
                 className={[
-                  "flex h-10 w-10 items-center justify-center rounded-xl",
-                  "border border-zinc-300/60",
-                  "bg-[#eef1f5] text-zinc-500",
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                  "border border-violet-400/30 bg-[#121026] text-violet-300",
                   insetShadow,
                 ].join(" ")}
               >
-                <Wallet size={16} />
+                <Wallet size={15} />
               </div>
 
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.12em] text-zinc-400">
+              <div className="min-w-0">
+                <p className="text-[8px] uppercase tracking-[0.12em] text-violet-300/85">
                   Journal Status
                 </p>
 
-                <p className="mt-1 text-xs text-zinc-600">
-                  You currently have{" "}
-                  <span className="text-zinc-900">
-                    {metrics.totalTrades}{" "}
-                    completed trades
+                <p
+                  className="mt-1 text-[10px] text-violet-200"
+                  style={numberFontStyle}
+                >
+                  Showing{" "}
+                  <span className="text-violet-50">
+                    {metrics.totalTrades} completed trades
                   </span>{" "}
-                  recorded in your journal.
+                  for {periodLabel}.
                 </p>
               </div>
             </div>
 
             <Link
               href="/trades"
-              className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.12em] text-zinc-500 transition hover:text-zinc-900"
+              className="inline-flex shrink-0 items-center gap-1.5 text-[9px] uppercase tracking-[0.12em] text-violet-300 transition hover:text-violet-50"
             >
-              Review Journal
-              <ArrowRight size={13} />
+              Review Journal <ArrowRight size={12} />
             </Link>
           </div>
         </section>

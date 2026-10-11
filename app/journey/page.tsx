@@ -16,23 +16,29 @@ import {
 ========================================================= */
 
 const FONT_DISPLAY =
-  '"Lucida Fax", "Lucida Bright", Georgia, serif';
+  'var(--font-space-grotesk, "Space Grotesk"), sans-serif';
 
 const FONT_NUMBERS =
-  '"Rubik", "Gotham", Arial, sans-serif';
+  'var(--font-inter, "Inter"), sans-serif';
 
 /* =========================================================
-   NEUMORPHIC STYLES
+   DARK VIOLET STYLES
 ========================================================= */
 
-const neutralShadow =
-  "shadow-[7px_7px_18px_rgba(163,177,198,0.24),-7px_-7px_18px_rgba(255,255,255,0.95)]";
+const card =
+  "border border-violet-400/15 bg-[#121026] shadow-[0_12px_35px_rgba(0,0,0,0.22)]";
 
-const insetShadow =
-  "shadow-[inset_5px_5px_12px_rgba(163,177,198,0.16),inset_-5px_-5px_12px_rgba(255,255,255,0.9)]";
+const softCard =
+  "border border-violet-400/15 bg-[#15122a]";
 
-const profitShadow =
-  "shadow-[7px_7px_18px_rgba(163,177,198,0.20),-7px_-7px_18px_rgba(255,255,255,0.95)] hover:shadow-[9px_9px_24px_rgba(163,177,198,0.22),-9px_-9px_24px_rgba(255,255,255,1),0_7px_28px_rgba(21,128,61,0.28)]";
+const insetCard =
+  "border border-violet-400/15 bg-[#0e0b1c]";
+
+const gradientText =
+  "bg-gradient-to-r from-violet-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent";
+
+const greenGradient =
+  "bg-gradient-to-r from-emerald-400 via-green-300 to-teal-300 bg-clip-text text-transparent";
 
 /* =========================================================
    TYPES
@@ -72,7 +78,6 @@ const journey: YearData[] = [
       { month: "Dec", start: 743, end: 892, pnl: 149 },
     ],
   },
-
   {
     year: 2027,
     months: [
@@ -90,7 +95,6 @@ const journey: YearData[] = [
       { month: "Dec", start: 6625, end: 7950, pnl: 1325 },
     ],
   },
-
   {
     year: 2028,
     months: [
@@ -108,7 +112,6 @@ const journey: YearData[] = [
       { month: "Dec", start: 59067, end: 70880, pnl: 11813 },
     ],
   },
-
   {
     year: 2029,
     months: [
@@ -126,7 +129,6 @@ const journey: YearData[] = [
       { month: "Dec", start: 329762, end: 379227, pnl: 49464 },
     ],
   },
-
   {
     year: 2030,
     months: [
@@ -173,172 +175,80 @@ function getYearPnL(months: MonthData[]) {
    MONTH CARD
 ========================================================= */
 
-function MonthCard({
-  month,
-}: {
-  month: MonthData;
-}) {
+function MonthCard({ month }: { month: MonthData }) {
   return (
-    <div
+    <article
       className={`
-        group
-        rounded-2xl
-        border
-        border-zinc-300/70
-        bg-[#eef1f5]
-        p-4
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:border-green-600/70
-        ${profitShadow}
+        group relative overflow-hidden rounded-2xl
+        ${softCard}
+        p-5
+        transition-all duration-300
+        hover:-translate-y-0.5
+        hover:border-emerald-400/40
+        hover:shadow-[0_12px_35px_rgba(16,185,129,0.09)]
       `}
     >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent opacity-60 transition-opacity group-hover:via-emerald-400/60" />
+
       {/* Month Header */}
 
-      <div className="mb-4 flex items-center justify-between">
-        <div
-          className="
-            text-[11px]
-            font-medium
-            uppercase
-            tracking-[0.18em]
-            text-zinc-500
-          "
-        >
-          {month.month}
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_9px_rgba(167,139,250,0.55)]" />
+          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+            {month.month}
+          </span>
         </div>
 
-        <div
-          className="
-            rounded-full
-            border
-            border-green-700/10
-            bg-green-700/[0.06]
-            px-2
-            py-1
-            text-[10px]
-            font-medium
-            tracking-[0.04em]
-            text-green-700
-          "
-        >
+        <span className="rounded-full border border-emerald-400/20 bg-emerald-400/[0.08] px-2.5 py-1 text-[10px] font-medium tracking-[0.03em] text-emerald-300">
           +{formatMoney(month.pnl)}
-        </div>
+        </span>
       </div>
 
       {/* Balance */}
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
-          <div
-            className="
-              mb-1
-              text-[9px]
-              font-medium
-              uppercase
-              tracking-[0.17em]
-              text-zinc-400
-            "
-          >
-            Starting
-          </div>
-
-          <div
-            className="
-              text-[15px]
-              font-medium
-              leading-none
-              tracking-[-0.025em]
-              text-zinc-700
-              tabular-nums
-            "
+          <p className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.17em] text-zinc-500">
+            Starting Balance
+          </p>
+          <p
+            className="text-[15px] font-medium leading-none tracking-[-0.025em] text-zinc-300 tabular-nums"
             style={{ fontFamily: FONT_NUMBERS }}
           >
             {formatMoney(month.start)}
-          </div>
+          </p>
         </div>
 
-        <div
-          className="
-            h-px
-            w-full
-            bg-zinc-300/70
-          "
-        />
+        <div className="h-px w-full bg-gradient-to-r from-violet-400/20 via-violet-300/10 to-transparent" />
 
         <div>
-          <div
-            className="
-              mb-1
-              text-[9px]
-              font-medium
-              uppercase
-              tracking-[0.17em]
-              text-zinc-400
-            "
-          >
-            Ending
-          </div>
-
-          <div
-            className="
-              text-[18px]
-              font-medium
-              leading-none
-              tracking-[-0.025em]
-              text-zinc-900
-              tabular-nums
-            "
+          <p className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.17em] text-zinc-500">
+            Ending Balance
+          </p>
+          <p
+            className={`text-xl font-medium leading-none tracking-[-0.035em] tabular-nums ${greenGradient}`}
             style={{ fontFamily: FONT_NUMBERS }}
           >
             {formatMoney(month.end)}
-          </div>
+          </p>
         </div>
       </div>
 
       {/* P&L */}
 
-      <div
-        className="
-          mt-4
-          flex
-          items-center
-          justify-between
-          rounded-xl
-          border
-          border-green-700/10
-          bg-green-700/[0.045]
-          px-3
-          py-2.5
-        "
-      >
-        <span
-          className="
-            text-[9px]
-            font-medium
-            uppercase
-            tracking-[0.16em]
-            text-zinc-500
-          "
-        >
+      <div className="mt-5 flex items-center justify-between gap-2 rounded-xl border border-emerald-400/15 bg-gradient-to-r from-emerald-400/[0.07] to-transparent px-3 py-3">
+        <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-zinc-400">
           Monthly P&L
         </span>
-
         <span
-          className="
-            text-[13px]
-            font-medium
-            tracking-[-0.01em]
-            text-green-700
-            tabular-nums
-          "
+          className="text-[13px] font-medium tracking-[-0.01em] text-emerald-300 tabular-nums"
           style={{ fontFamily: FONT_NUMBERS }}
         >
           +{formatMoney(month.pnl)}
         </span>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -370,67 +280,33 @@ function YearCalendar({
 
       <div
         className={`
-          mb-6
-          rounded-3xl
-          border
-          border-zinc-300/70
-          bg-[#eef1f5]
-          p-5
-          sm:p-6
-          ${neutralShadow}
+          relative mb-6 overflow-hidden rounded-3xl
+          ${card}
+          p-5 sm:p-6
+          transition-colors duration-300
+          hover:border-violet-300/30
         `}
       >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/60 to-transparent" />
+        <div className="pointer-events-none absolute -right-16 -top-24 h-48 w-48 rounded-full bg-violet-500/[0.06] blur-3xl" />
+
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           {/* Left */}
 
           <div className="flex items-center gap-4">
-            <div
-              className="
-                flex
-                h-12
-                w-12
-                shrink-0
-                items-center
-                justify-center
-                rounded-2xl
-                border
-                border-zinc-300/70
-                bg-[#eef1f5]
-              "
-              style={{
-                boxShadow:
-                  "inset 3px 3px 8px rgba(163,177,198,0.14), inset -3px -3px 8px rgba(255,255,255,0.9)",
-              }}
-            >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-400/[0.13] to-fuchsia-400/[0.04]">
               <CalendarDays
-                className="h-5 w-5 text-zinc-700"
+                className="h-5 w-5 text-violet-300"
                 strokeWidth={1.7}
               />
             </div>
 
             <div>
-              <div
-                className="
-                  mb-1
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.2em]
-                  text-zinc-400
-                "
-              >
+              <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.2em] text-violet-300/80">
                 Trading Year
-              </div>
-
+              </p>
               <h2
-                className="
-                  text-2xl
-                  font-medium
-                  leading-none
-                  tracking-[-0.025em]
-                  text-zinc-900
-                  sm:text-3xl
-                "
+                className={`text-3xl font-medium leading-none tracking-[-0.04em] ${gradientText}`}
                 style={{ fontFamily: FONT_NUMBERS }}
               >
                 {data.year}
@@ -442,146 +318,68 @@ function YearCalendar({
 
           <div className="grid grid-cols-3 gap-3 sm:gap-5">
             <div>
-              <div
-                className="
-                  mb-1
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.14em]
-                  text-zinc-400
-                "
-              >
+              <p className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.14em] text-zinc-500">
                 Start
-              </div>
-
-              <div
-                className="
-                  text-[13px]
-                  font-medium
-                  tracking-[-0.015em]
-                  text-zinc-700
-                  tabular-nums
-                  sm:text-[15px]
-                "
+              </p>
+              <p
+                className="text-[13px] font-medium tracking-[-0.015em] text-zinc-200 tabular-nums sm:text-[15px]"
                 style={{ fontFamily: FONT_NUMBERS }}
               >
                 {formatMoney(yearStart)}
-              </div>
+              </p>
             </div>
 
             <div>
-              <div
-                className="
-                  mb-1
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.14em]
-                  text-zinc-400
-                "
-              >
+              <p className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.14em] text-zinc-500">
                 P&L
-              </div>
-
-              <div
-                className="
-                  text-[13px]
-                  font-medium
-                  tracking-[-0.015em]
-                  text-green-700
-                  tabular-nums
-                  sm:text-[15px]
-                "
+              </p>
+              <p
+                className="text-[13px] font-medium tracking-[-0.015em] text-emerald-300 tabular-nums sm:text-[15px]"
                 style={{ fontFamily: FONT_NUMBERS }}
               >
                 +{formatMoney(yearPnL)}
-              </div>
+              </p>
             </div>
 
             <div>
-              <div
-                className="
-                  mb-1
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.14em]
-                  text-zinc-400
-                "
-              >
+              <p className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.14em] text-zinc-500">
                 Growth
-              </div>
-
-              <div
-                className="
-                  text-[13px]
-                  font-medium
-                  tracking-[-0.015em]
-                  text-green-700
-                  tabular-nums
-                  sm:text-[15px]
-                "
+              </p>
+              <p
+                className="text-[13px] font-medium tracking-[-0.015em] text-emerald-300 tabular-nums sm:text-[15px]"
                 style={{ fontFamily: FONT_NUMBERS }}
               >
                 +{growth.toFixed(0)}%
-              </div>
+              </p>
             </div>
           </div>
         </div>
 
         {/* Progress */}
 
-        <div className="mt-5">
-          <div
-            className="
-              mb-2
-              flex
-              items-center
-              justify-between
-              text-[9px]
-              font-medium
-              uppercase
-              tracking-[0.14em]
-              text-zinc-400
-            "
-          >
+        <div className="relative mt-6">
+          <div className="mb-2 flex items-center justify-between text-[9px] font-medium uppercase tracking-[0.15em] text-zinc-500">
             <span>Year Progress</span>
             <span>12 Months</span>
           </div>
 
-          <div
-            className={`
-              h-2
-              overflow-hidden
-              rounded-full
-              bg-[#eef1f5]
-              ${insetShadow}
-            `}
-          >
-            <div
-              className="
-                h-full
-                w-full
-                rounded-full
-                bg-green-700/70
-              "
-            />
+          <div className="h-2 overflow-hidden rounded-full border border-violet-400/10 bg-[#0e0b1c]">
+            <div className="h-full w-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-emerald-400 shadow-[0_0_12px_rgba(139,92,246,0.25)]" />
           </div>
+        </div>
+
+        <div className="relative mt-4 flex items-center gap-2">
+          <div className="h-px flex-1 bg-gradient-to-r from-violet-400/25 to-transparent" />
+          <span className="text-[8px] font-medium uppercase tracking-[0.18em] text-zinc-600">
+            {yearStart.toLocaleString("en-US")} → {yearEnd.toLocaleString("en-US")}
+          </span>
+          <div className="h-px flex-1 bg-gradient-to-l from-fuchsia-400/20 to-transparent" />
         </div>
       </div>
 
       {/* Calendar */}
 
-      <div
-        className="
-          grid
-          grid-cols-1
-          gap-4
-          sm:grid-cols-2
-          xl:grid-cols-3
-        "
-      >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {data.months.map((month) => (
           <MonthCard
             key={`${data.year}-${month.month}`}
@@ -594,23 +392,7 @@ function YearCalendar({
 
       {!isLastYear && (
         <div className="flex justify-center py-8">
-          <div
-            className="
-              flex
-              h-9
-              w-9
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-zinc-300/70
-              bg-[#eef1f5]
-            "
-            style={{
-              boxShadow:
-                "3px 3px 8px rgba(163,177,198,0.18),-3px -3px 8px rgba(255,255,255,0.9)",
-            }}
-          >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-400/20 bg-[#15122a] shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
             <ArrowDownIcon />
           </div>
         </div>
@@ -620,7 +402,7 @@ function YearCalendar({
 }
 
 /* =========================================================
-   SIMPLE DOWN ICON
+   DOWN ICON
 ========================================================= */
 
 function ArrowDownIcon() {
@@ -628,7 +410,7 @@ function ArrowDownIcon() {
     <svg
       viewBox="0 0 24 24"
       fill="none"
-      className="h-4 w-4 text-zinc-500"
+      className="h-4 w-4 text-violet-300"
       stroke="currentColor"
       strokeWidth="1.7"
     >
@@ -656,453 +438,231 @@ export default function JourneyPage() {
 
   return (
     <main
-      className="
-        min-h-screen
-        bg-[#eef1f5]
-        px-4
-        py-6
-        sm:px-6
-        lg:px-8
-      "
+      className="min-h-screen bg-[#0b0718] px-4 py-6 text-zinc-100 sm:px-6 lg:px-8"
+      style={{ fontFamily: FONT_DISPLAY }}
     >
       <div className="mx-auto max-w-7xl">
-        {/* =================================================
-            TOP NAV
-        ================================================= */}
+        {/* TOP NAV */}
 
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between gap-3">
           <Link
             href="/dashboard"
-            className="
-              group
-              inline-flex
-              items-center
-              gap-2
-              rounded-xl
-              border
-              border-zinc-300/70
-              bg-[#eef1f5]
-              px-3
-              py-2
-              text-[11px]
-              font-medium
-              tracking-[0.02em]
-              text-zinc-600
-              transition-all
-              duration-300
-              hover:border-green-600/70
-              hover:text-green-700
-              hover:shadow-[0_6px_20px_rgba(21,128,61,0.18)]
-            "
+            className={`group inline-flex items-center gap-3 rounded-xl ${softCard} px-4 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-300 transition-all duration-300 hover:border-violet-300/50 hover:bg-violet-400/[0.06] hover:text-violet-200 sm:px-5`}
           >
             <ArrowLeft
               className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-0.5"
               strokeWidth={1.8}
             />
-
             Back to Dashboard
           </Link>
 
-          <div
-            className="
-              hidden
-              items-center
-              gap-2
-              text-[10px]
-              font-medium
-              uppercase
-              tracking-[0.2em]
-              text-zinc-400
-              sm:flex
-            "
-          >
+          <div className={`hidden items-center gap-2 rounded-xl ${softCard} px-4 py-3 text-[9px] font-medium uppercase tracking-[0.18em] text-violet-200 sm:flex`}>
             <TrendingUp
-              className="h-3.5 w-3.5"
+              className="h-3.5 w-3.5 text-violet-300"
               strokeWidth={1.7}
             />
-
             Long-Term Plan
           </div>
         </div>
 
-        {/* =================================================
-            HEADER
-        ================================================= */}
+        {/* HEADER */}
 
         <div className="mb-8 max-w-3xl">
-          <div
-            className="
-              mb-2
-              text-[10px]
-              font-medium
-              uppercase
-              tracking-[0.22em]
-              text-green-700
-            "
-          >
-            The Millionaire Diary
+          <div className="mb-3 flex items-center gap-2">
+            <span className="h-px w-7 bg-gradient-to-r from-violet-400 to-fuchsia-400" />
+            <span className="text-[9px] font-medium uppercase tracking-[0.23em] text-violet-300">
+              The Millionaire Diary
+            </span>
           </div>
 
           <h1
-            className="
-              text-3xl
-              font-medium
-              leading-tight
-              tracking-[-0.025em]
-              text-zinc-900
-              sm:text-4xl
-            "
+            className={`text-3xl font-medium leading-[1.12] tracking-[-0.04em] sm:text-5xl ${gradientText}`}
             style={{ fontFamily: FONT_DISPLAY }}
           >
             The Millionaire Diary
           </h1>
 
-          <p
-            className="
-              mt-3
-              max-w-2xl
-              text-[12px]
-              font-normal
-              leading-[1.7]
-              tracking-[0.005em]
-              text-zinc-500
-              sm:text-[13px]
-            "
-          >
-            A month-by-month roadmap showing the planned
-            progression from the starting balance toward the
-            long-term destination.
+          <p className="mt-4 max-w-2xl text-[12px] font-normal leading-[1.8] tracking-[0.005em] text-zinc-400 sm:text-[13px]">
+            A month-by-month roadmap showing the planned progression from the
+            starting balance toward the long-term destination.
           </p>
         </div>
 
-        {/* =================================================
-            DESTINATION CARD
-        ================================================= */}
+        {/* DESTINATION CARD */}
 
-        <div
-          className={`
-            mb-7
-            overflow-hidden
-            rounded-3xl
-            border
-            border-zinc-300/70
-            bg-[#eef1f5]
-            ${neutralShadow}
-          `}
-        >
-          <div className="p-5 sm:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              {/* Destination */}
+        <section className={`relative mb-7 overflow-hidden rounded-3xl ${card}`}>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.10] via-transparent to-fuchsia-500/[0.06]" />
+          <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-violet-500/[0.09] blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-fuchsia-500/[0.06] blur-3xl" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/70 to-transparent" />
 
+          <div className="relative p-5 sm:p-7">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
-                <div
-                  className="
-                    flex
-                    h-12
-                    w-12
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-2xl
-                    border
-                    border-zinc-300/70
-                    bg-[#eef1f5]
-                  "
-                  style={{
-                    boxShadow:
-                      "inset 3px 3px 8px rgba(163,177,198,0.14), inset -3px -3px 8px rgba(255,255,255,0.9)",
-                  }}
-                >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-300/25 bg-gradient-to-br from-violet-400/15 to-fuchsia-400/[0.06]">
                   <Flag
-                    className="h-5 w-5 text-green-700"
+                    className="h-5 w-5 text-violet-200"
                     strokeWidth={1.7}
                   />
                 </div>
 
                 <div>
-                  <div
-                    className="
-                      mb-1
-                      text-[10px]
-                      font-medium
-                      uppercase
-                      tracking-[0.2em]
-                      text-zinc-400
-                    "
-                  >
+                  <p className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.2em] text-violet-300/80">
                     Final Destination
-                  </div>
-
-                  <div
-                    className="
-                      text-xl
-                      font-medium
-                      tracking-[-0.02em]
-                      text-zinc-900
-                      tabular-nums
-                      sm:text-2xl
-                    "
+                  </p>
+                  <p
+                    className={`text-2xl font-medium tracking-[-0.035em] tabular-nums sm:text-3xl ${greenGradient}`}
                     style={{ fontFamily: FONT_NUMBERS }}
                   >
-                    {formatMoney(finalBalance)}
-                  </div>
+                    $ {formatMoney(finalBalance)}
+                  </p>
                 </div>
               </div>
 
-              <div className="hidden h-10 w-px bg-zinc-300/70 lg:block" />
+              <div className="hidden h-12 w-px bg-gradient-to-b from-transparent via-violet-300/30 to-transparent lg:block" />
 
-              {/* Message */}
-
-              <div className="max-w-lg">
-                <p
-                  className="
-                    text-[15px]
-                    font-normal
-                    leading-[1.7]
-                    tracking-[0.005em]
-                    text-zinc-500
-                  "
-                >
-                  I Am The Millionaire The Power
-                  Of Discipline And Compounding
+              <div className="max-w-lg lg:text-right">
+                <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-zinc-500">
+                  The Vision
+                </p>
+                <p className={`mt-2 text-base font-medium leading-[1.7] tracking-[-0.015em] sm:text-lg ${gradientText}`}>
+                  I Am The Millionaire
+                  <br className="hidden sm:block" /> The Power Of Discipline
+                  And Compounding
                 </p>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* =================================================
-            SUMMARY CARDS
-        ================================================= */}
+        {/* SUMMARY CARDS */}
 
-        <div
-          className="
-            mb-9
-            grid
-            grid-cols-1
-            gap-4
-            sm:grid-cols-3
-          "
-        >
+        <div className="mb-9 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* Starting Balance */}
 
-          <div
-            className={`
-              rounded-2xl
-              border
-              border-zinc-300/70
-              bg-[#eef1f5]
-              p-5
-              transition-all
-              duration-300
-              hover:-translate-y-0.5
-              hover:border-green-600/70
-              ${profitShadow}
-            `}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span
-                className="
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.18em]
-                  text-zinc-400
-                "
-              >
+          <div className={`group relative overflow-hidden rounded-2xl ${softCard} p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-300/40 hover:shadow-[0_12px_35px_rgba(139,92,246,0.10)]`}>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent" />
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-zinc-400">
                 Starting Balance
               </span>
-
               <CircleDollarSign
-                className="h-4 w-4 text-zinc-400"
+                className="h-4 w-4 text-violet-300"
                 strokeWidth={1.6}
               />
             </div>
-
-            <div
-              className="
-                text-2xl
-                font-medium
-                leading-none
-                tracking-[-0.025em]
-                text-zinc-900
-                tabular-nums
-              "
+            <p
+              className="text-2xl font-medium leading-none tracking-[-0.035em] text-zinc-100 tabular-nums"
               style={{ fontFamily: FONT_NUMBERS }}
             >
               $ {formatMoney(startingBalance)}
-            </div>
+            </p>
+            <p className="mt-3 text-[9px] uppercase tracking-[0.14em] text-zinc-600">
+              Initial capital
+            </p>
           </div>
 
           {/* Total P&L */}
 
-          <div
-            className={`
-              rounded-2xl
-              border
-              border-zinc-300/70
-              bg-[#eef1f5]
-              p-5
-              transition-all
-              duration-300
-              hover:-translate-y-0.5
-              hover:border-green-600/70
-              ${profitShadow}
-            `}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span
-                className="
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.18em]
-                  text-zinc-400
-                "
-              >
+          <div className={`group relative overflow-hidden rounded-2xl border border-emerald-400/15 bg-[#15122a] p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-400/40 hover:shadow-[0_12px_35px_rgba(16,185,129,0.10)]`}>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-zinc-400">
                 Total P&L
               </span>
-
               <TrendingUp
-                className="h-4 w-4 text-green-700"
+                className="h-4 w-4 text-emerald-300"
                 strokeWidth={1.7}
               />
             </div>
-
-            <div
-              className="
-                text-2xl
-                font-medium
-                leading-none
-                tracking-[-0.025em]
-                text-green-700
-                tabular-nums
-              "
+            <p
+              className="text-2xl font-medium leading-none tracking-[-0.035em] text-emerald-300 tabular-nums"
               style={{ fontFamily: FONT_NUMBERS }}
             >
               $ {formatMoney(totalPnL)}
-            </div>
+            </p>
+            <p className="mt-3 text-[9px] uppercase tracking-[0.14em] text-emerald-300/60">
+              Cumulative growth
+            </p>
           </div>
 
           {/* Final Balance */}
 
-          <div
-            className={`
-              rounded-2xl
-              border
-              border-zinc-300/70
-              bg-[#eef1f5]
-              p-5
-              transition-all
-              duration-300
-              hover:-translate-y-0.5
-              hover:border-green-600/70
-              ${profitShadow}
-            `}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span
-                className="
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.18em]
-                  text-zinc-400
-                "
-              >
+          <div className={`group relative overflow-hidden rounded-2xl ${softCard} p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-fuchsia-300/40 hover:shadow-[0_12px_35px_rgba(217,70,239,0.10)]`}>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/60 to-transparent" />
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-zinc-400">
                 Final Balance
               </span>
-
               <Flag
-                className="h-4 w-4 text-green-700"
+                className="h-4 w-4 text-fuchsia-300"
                 strokeWidth={1.7}
               />
             </div>
-
-            <div
-              className="
-                text-2xl
-                font-medium
-                leading-none
-                tracking-[-0.025em]
-                text-zinc-900
-                tabular-nums
-              "
+            <p
+              className={`text-2xl font-medium leading-none tracking-[-0.035em] tabular-nums ${gradientText}`}
               style={{ fontFamily: FONT_NUMBERS }}
             >
               $ {formatMoney(finalBalance)}
-            </div>
+            </p>
+            <p className="mt-3 text-[9px] uppercase tracking-[0.14em] text-zinc-600">
+              Projected destination
+            </p>
           </div>
         </div>
 
-        {/* =================================================
-            THE ROUTE
-        ================================================= */}
+        {/* THE ROUTE */}
 
-        <div
-          className="
-            mb-9
-            rounded-3xl
-            border
-            border-zinc-300/70
-            bg-[#eef1f5]
-            p-5
-            sm:p-6
-          "
-          style={{
-            boxShadow:
-              "inset 4px 4px 10px rgba(163,177,198,0.13), inset -4px -4px 10px rgba(255,255,255,0.88)",
-          }}
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className={`relative mb-9 overflow-hidden rounded-3xl ${insetCard} p-5 sm:p-7`}>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent" />
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div
-                className="
-                  mb-1
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.2em]
-                  text-green-700
-                "
-              >
-                The Route
+              <div className="mb-2 flex items-center gap-2">
+                <span className="h-px w-5 bg-gradient-to-r from-violet-400 to-fuchsia-400" />
+                <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-violet-300">
+                  The Route
+                </p>
               </div>
-
               <h2
-                className="
-                  text-lg
-                  font-medium
-                  tracking-[-0.02em]
-                  text-zinc-900
-                "
+                className={`text-xl font-medium tracking-[-0.025em] sm:text-2xl ${gradientText}`}
                 style={{ fontFamily: FONT_DISPLAY }}
               >
                 One month at a time.
               </h2>
             </div>
 
-            <div
-              className="
-                max-w-xl
-                text-[11px]
-                font-normal
-                leading-[1.7]
-                tracking-[0.005em]
-                text-zinc-500
-              "
-            >
-              Every calendar represents another stage of
-              the journey. Focus on the current month, follow
-              the plan, protect the downside, and let the
-              numbers compound naturally.
-            </div>
+            <p className="max-w-xl text-[11px] font-normal leading-[1.8] tracking-[0.005em] text-zinc-400">
+              Every calendar represents another stage of the journey. Focus on
+              the current month, follow the plan, protect the downside, and let
+              the numbers compound naturally.
+            </p>
           </div>
-        </div>
 
-        {/* =================================================
-            YEAR CALENDARS
-        ================================================= */}
+          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+            {[
+              { number: "01", label: "Stay Consistent" },
+              { number: "02", label: "Protect Capital" },
+              { number: "03", label: "Compound" },
+            ].map((item) => (
+              <div
+                key={item.number}
+                className="rounded-xl border border-violet-400/10 bg-[#15122a] px-3 py-3"
+              >
+                <span
+                  className="text-[10px] font-medium text-violet-300"
+                  style={{ fontFamily: FONT_NUMBERS }}
+                >
+                  {item.number}
+                </span>
+                <p className="mt-1.5 text-[9px] font-medium uppercase leading-[1.5] tracking-[0.1em] text-zinc-400 sm:text-[10px]">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* YEAR CALENDARS */}
 
         <div className="space-y-0">
           {journey.map((year, index) => (
@@ -1114,113 +674,67 @@ export default function JourneyPage() {
           ))}
         </div>
 
-        {/* =================================================
-            FINAL REMINDER
-        ================================================= */}
+        {/* FINAL REMINDER */}
 
-        <div
-          className={`
-            mt-10
-            rounded-3xl
-            border
-            border-zinc-300/70
-            bg-[#eef1f5]
-            p-6
-            sm:p-8
-            ${neutralShadow}
-          `}
-        >
-          <div className="flex flex-col items-center text-center">
-            <div
-              className="
-                mb-4
-                flex
-                h-11
-                w-11
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-green-700/20
-                bg-green-700/[0.06]
-              "
-            >
+        <section className={`relative mt-10 overflow-hidden rounded-3xl ${card} p-6 sm:p-9`}>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.07] via-transparent to-fuchsia-500/[0.06]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/60 to-transparent" />
+
+          <div className="relative flex flex-col items-center text-center">
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-400/[0.12] to-violet-400/[0.05]">
               <CheckCircle2
-                className="h-5 w-5 text-green-700"
+                className="h-5 w-5 text-emerald-300"
                 strokeWidth={1.7}
               />
             </div>
 
+            <p className="text-[9px] font-medium uppercase tracking-[0.22em] text-violet-300">
+              Discipline · Patience · Consistency
+            </p>
+
             <h2
-              className="
-                text-xl
-                font-medium
-                tracking-[-0.02em]
-                text-zinc-900
-                sm:text-2xl
-              "
+              className={`mt-3 text-2xl font-medium tracking-[-0.035em] sm:text-3xl ${gradientText}`}
               style={{ fontFamily: FONT_DISPLAY }}
             >
               Trust the process.
             </h2>
 
-            <p
-              className="
-                mt-3
-                max-w-xl
-                text-[12px]
-                font-normal
-                leading-[1.8]
-                tracking-[0.005em]
-                text-zinc-500
-              "
-            >
-              The destination is built through thousands of
-              small decisions. Follow the rules, respect risk,
-              journal the process, and stay focused on the
-              month directly in front of you.
+            <p className="mt-4 max-w-xl text-[12px] font-normal leading-[1.85] tracking-[0.005em] text-zinc-400">
+              The destination is built through thousands of small decisions.
+              Follow the rules, respect risk, journal the process, and stay
+              focused on the month directly in front of you.
             </p>
 
             <Link
               href="/dashboard"
-              className="
-                group
-                mt-6
-                inline-flex
-                items-center
-                gap-2
-                rounded-xl
-                border
-                border-zinc-900
-                bg-zinc-900
-                px-5
-                py-3
-                text-[11px]
-                font-medium
-                tracking-[0.03em]
-                text-white
-                transition-all
-                duration-300
-                hover:border-green-600
-                hover:bg-zinc-900
-                hover:shadow-[0_7px_26px_rgba(21,128,61,0.28)]
-              "
+              className="group mt-7 inline-flex items-center gap-2.5 rounded-xl border border-violet-300/25 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-5 py-3 text-[10px] font-medium uppercase tracking-[0.13em] text-white transition-all duration-300 hover:border-violet-200/60 hover:shadow-[0_8px_28px_rgba(139,92,246,0.30)]"
             >
               Return to Dashboard
-
               <ArrowRight
-                className="
-                  h-3.5
-                  w-3.5
-                  transition-transform
-                  duration-300
-                  group-hover:translate-x-0.5
-                "
+                className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5"
                 strokeWidth={1.8}
               />
             </Link>
           </div>
-        </div>
+        </section>
+
+        {/* FOOTER */}
+
+        <footer className="mt-8 border-t border-violet-400/15 py-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[9px] font-medium uppercase tracking-[0.17em] text-zinc-600">
+              The Millionaire Diary · Long-Term Plan
+            </p>
+            <p className="text-[9px] font-medium uppercase tracking-[0.15em] text-zinc-600">
+              Plan · Execute · Review · Refine
+            </p>
+          </div>
+          <p className="mt-4 max-w-3xl text-[10px] leading-[1.7] text-zinc-600">
+            This roadmap is a projection, not a guarantee of returns. Actual
+            trading results vary, and losses are possible. Prioritize risk
+            management and validate your strategy with real performance data.
+          </p>
+        </footer>
       </div>
     </main>
   );
